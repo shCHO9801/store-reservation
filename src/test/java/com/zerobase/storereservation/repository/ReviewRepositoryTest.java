@@ -1,6 +1,6 @@
 package com.zerobase.storereservation.repository;
 
-import com.zerobase.storereservation.entity.Reservation;
+import com.zerobase.storereservation.entity.Review;
 import com.zerobase.storereservation.entity.Store;
 import com.zerobase.storereservation.entity.User;
 import org.junit.jupiter.api.DisplayName;
@@ -16,52 +16,54 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @DataJpaTest
-class ReservationRepositoryTest {
+class ReviewRepositoryTest {
 
     @Autowired
-    private ReservationRepository reservationRepository;
-
-    @Autowired
-    private UserRepository userRepository;
+    private ReviewRepository reviewRepository;
 
     @Autowired
     private StoreRepository storeRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @Test
-    @DisplayName("Reservation 엔티티 저장 및 조회 서비스")
-    void savaAndFindReservation() {
+    @DisplayName("Review 엔티티 저장 및 조회 서비스")
+    void saveAndFindReview() {
         //given
         User user = User.builder()
-                .username("customer")
+                .username("reviewer")
                 .password("password")
                 .role("CUSTOMER")
                 .build();
         userRepository.save(user);
 
         Store store = Store.builder()
-                .name("store")
-                .location("test Street")
+                .name("Review Store")
+                .location("test location")
                 .description("test description")
                 .owner(user)
                 .build();
         storeRepository.save(store);
 
-        Reservation reservation = Reservation.builder()
+        Review review = Review.builder()
                 .store(store)
                 .user(user)
-                .reservedAt(LocalDateTime.now())
-                .status("CONFIRMED")
+                .content("This is a review")
+                .createdAt(LocalDateTime.now())
                 .build();
 
         //when
-        reservationRepository.save(reservation);
-        Optional<Reservation> foundReservation = reservationRepository.findById(reservation.getId());
+        reviewRepository.save(review);
+        Optional<Review> foundReview = reviewRepository.findById(review.getId());
 
         //then
-        assertTrue(foundReservation.isPresent());
-        assertEquals(reservation.getStore().getId(), foundReservation.get().getStore().getId());
-        assertEquals(reservation.getUser().getId(), foundReservation.get().getUser().getId());
-        assertEquals(reservation.getStatus(), foundReservation.get().getStatus());
-        assertEquals(reservation.getReservedAt(), foundReservation.get().getReservedAt());
+        assertTrue(foundReview.isPresent());
+        assertEquals(review.getStore().getId(), foundReview.get().getStore().getId());
+        assertEquals(review.getUser().getId(), foundReview.get().getUser().getId());
+        assertEquals(review.getContent(), foundReview.get().getContent());
+        assertEquals(review.getCreatedAt(), foundReview.get().getCreatedAt());
+
     }
+
 }

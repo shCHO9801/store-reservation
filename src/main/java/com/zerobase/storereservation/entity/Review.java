@@ -11,22 +11,23 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Reservation {
+public class Review {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // 예약 ID
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_id", nullable = false)
-    private Store store; // 예약된 매장
+    private Store store;                // 리뷰가 작성된 매장
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user; // 예약한 사용자
+    private User user;                  // 리뷰가 작성자
 
     @Column(nullable = false)
-    private LocalDateTime reservedAt; // 예약 시간
+    private String content;             //리뷰 내용
 
     @Column(nullable = false)
-    private String status; // 예약 상태 (CONFIRMED, CANCELLED 등)
+    private LocalDateTime createdAt;    // 리뷰 작성 시간
 }
