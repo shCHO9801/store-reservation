@@ -14,7 +14,7 @@ public class UserDto {
 
     @Data
     @Builder
-    public static class Response{
+    public static class Response {
         private Long id;
         private String username;
         private String role;
