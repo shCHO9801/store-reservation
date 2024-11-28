@@ -1,13 +1,16 @@
 package com.zerobase.storereservation.entity;
 
+import com.zerobase.storereservation.entity.constants.ReservationStatus;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -27,6 +30,7 @@ public class Reservation {
     @Column(nullable = false)
     private LocalDateTime reservedAt; // 예약 시간
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status; // 예약 상태 (CONFIRMED, CANCELLED 등)
+    private ReservationStatus status; // 예약 상태 (CONFIRMED, CANCELLED 등)
 }

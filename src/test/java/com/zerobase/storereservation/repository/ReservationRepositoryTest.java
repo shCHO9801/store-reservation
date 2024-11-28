@@ -1,8 +1,13 @@
 package com.zerobase.storereservation.repository;
 
+import com.zerobase.storereservation.dto.ReservationDto;
 import com.zerobase.storereservation.entity.Reservation;
 import com.zerobase.storereservation.entity.Store;
 import com.zerobase.storereservation.entity.User;
+import com.zerobase.storereservation.entity.constants.ReservationStatus;
+import com.zerobase.storereservation.exception.CustomException;
+import com.zerobase.storereservation.exception.ErrorCode;
+import com.zerobase.storereservation.service.ReservationService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +17,9 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import static com.zerobase.storereservation.exception.ErrorCode.STORE_NOT_FOUND;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @DataJpaTest
@@ -26,6 +33,8 @@ class ReservationRepositoryTest {
 
     @Autowired
     private StoreRepository storeRepository;
+    @Autowired
+    private ReservationService reservationService;
 
     @Test
     @DisplayName("Reservation 엔티티 저장 및 조회 서비스")
@@ -50,7 +59,7 @@ class ReservationRepositoryTest {
                 .store(store)
                 .user(user)
                 .reservedAt(LocalDateTime.now())
-                .status("CONFIRMED")
+                .status(ReservationStatus.CONFIRMED)
                 .build();
 
         //when
