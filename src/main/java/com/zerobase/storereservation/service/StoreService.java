@@ -4,13 +4,14 @@ import com.zerobase.storereservation.dto.StoreDto;
 import com.zerobase.storereservation.entity.Store;
 import com.zerobase.storereservation.entity.User;
 import com.zerobase.storereservation.exception.CustomException;
-import com.zerobase.storereservation.exception.ErrorCode;
 import com.zerobase.storereservation.repository.StoreRepository;
 import com.zerobase.storereservation.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import static com.zerobase.storereservation.exception.ErrorCode.USER_NOT_FOUND;
+import static com.zerobase.storereservation.exception.ErrorCode.*;
 
 @Service
 @RequiredArgsConstructor
@@ -43,7 +44,7 @@ public class StoreService {
 
     public StoreDto.Response getStoreById(Long id) {
         Store store = storeRepository.findById(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(STORE_NOT_FOUND));
 
         return StoreDto.Response.builder()
                 .id(store.getId())
@@ -52,5 +53,43 @@ public class StoreService {
                 .description(store.getDescription())
                 .ownerId(store.getOwner().getId())
                 .build();
+    }
+
+    public StoreDto.Response updateStore(Long id, StoreDto.CreateRequest request) {
+        Store store = storeRepository.findById(id)
+                .orElseThrow(() -> new CustomException(STORE_NOT_FOUND));
+
+        validateOwnership(store);
+
+        store.setName(request.getName());
+        store.setLocation(request.getLocation());
+        store.setDescription(request.getDescription());
+
+        storeRepository.save(store);
+        return StoreDto.Response.builder()
+                .id(store.getId())
+                .name(store.getName())
+                .location(store.getLocation())
+                .description(store.getDescription())
+                .ownerId(store.getOwner().getId())
+                .build();
+    }
+
+    public void deleteStore(Long id) {
+        Store store = storeRepository.findById(id)
+                .orElseThrow(() -> new CustomException(STORE_NOT_FOUND));
+
+        validateOwnership(store);
+
+        storeRepository.delete(store);
+    }
+
+    private void validateOwnership(Store store) {
+        Authentication auth = SecurityContextHolder
+                .getContext().getAuthentication();
+        User currentUser = (User) auth.getPrincipal();
+        if (!store.getOwner().getId().equals(currentUser.getId())) {
+            throw new CustomException(UNAUTHORIZED_ACTION);
+        }
     }
 }

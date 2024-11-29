@@ -5,6 +5,7 @@ import com.zerobase.storereservation.entity.Reservation;
 import com.zerobase.storereservation.entity.Store;
 import com.zerobase.storereservation.entity.User;
 import com.zerobase.storereservation.entity.constants.ReservationStatus;
+import com.zerobase.storereservation.entity.constants.Role;
 import com.zerobase.storereservation.exception.CustomException;
 import com.zerobase.storereservation.exception.ErrorCode;
 import com.zerobase.storereservation.service.ReservationService;
@@ -41,7 +42,7 @@ class ReservationRepositoryTest {
         User user = User.builder()
                 .username("customer")
                 .password("password")
-                .role("CUSTOMER")
+                .role(Role.CUSTOMER)
                 .build();
         userRepository.save(user);
 

@@ -3,6 +3,7 @@ package com.zerobase.storereservation.repository;
 import com.zerobase.storereservation.entity.Review;
 import com.zerobase.storereservation.entity.Store;
 import com.zerobase.storereservation.entity.User;
+import com.zerobase.storereservation.entity.constants.Role;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import static com.zerobase.storereservation.entity.constants.Role.CUSTOMER;
 import static org.junit.jupiter.api.Assertions.*;
 
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -34,7 +36,7 @@ class ReviewRepositoryTest {
         User user = User.builder()
                 .username("reviewer")
                 .password("password")
-                .role("CUSTOMER")
+                .role(CUSTOMER)
                 .build();
         userRepository.save(user);
 

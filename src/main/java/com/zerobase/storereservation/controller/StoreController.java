@@ -25,4 +25,22 @@ public class StoreController {
             @PathVariable Long id) {
         return ResponseEntity.ok(storeService.getStoreById(id));
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<StoreDto.Response> updateStore(
+            @PathVariable Long id,
+            @RequestBody StoreDto.CreateRequest request
+    ) {
+        return ResponseEntity.ok(storeService.updateStore(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteStore(
+            @PathVariable Long id
+    ) {
+        storeService.deleteStore(id);
+        return ResponseEntity.noContent().build();
+    }
+
+
 }

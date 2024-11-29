@@ -2,6 +2,7 @@ package com.zerobase.storereservation.dto;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 
 public class StoreDto {
 
