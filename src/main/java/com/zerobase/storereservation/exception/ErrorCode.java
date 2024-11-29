@@ -14,7 +14,10 @@ public enum ErrorCode {
     // Store Error
     STORE_NOT_FOUND(HttpStatus.BAD_REQUEST, "STORE-001", "상점을 찾을 수 없습니다."),
     // Reservation Error
-    RESERVATION_NOT_FOUND(HttpStatus.BAD_REQUEST, "RESERVATION-001", "예약을 찾을 수 없습니다.");
+    RESERVATION_NOT_FOUND(HttpStatus.BAD_REQUEST, "RESERVATION-001", "예약을 찾을 수 없습니다."),
+
+    //Review Error
+    REVIEW_NOT_FOUND(HttpStatus.BAD_REQUEST, "REVIEW-001", "리뷰가 존재하지 않습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;      // 에러 코드를 숫자로 변환하면 클라이언트에서 파싱하기 편함

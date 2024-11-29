@@ -33,13 +33,11 @@ class ReservationRepositoryTest {
 
     @Autowired
     private StoreRepository storeRepository;
-    @Autowired
-    private ReservationService reservationService;
 
     @Test
-    @DisplayName("Reservation 엔티티 저장 및 조회 서비스")
-    void savaAndFindReservation() {
-        //given
+    @DisplayName("Reservation 엔티티 저장 및 조회 테스트")
+    void saveAndFindReservation() {
+        // given
         User user = User.builder()
                 .username("customer")
                 .password("password")
@@ -55,22 +53,23 @@ class ReservationRepositoryTest {
                 .build();
         storeRepository.save(store);
 
+        LocalDateTime fixedTime = LocalDateTime.of(2024, 12, 1, 10, 0);
         Reservation reservation = Reservation.builder()
                 .store(store)
                 .user(user)
-                .reservedAt(LocalDateTime.now())
+                .reservedAt(fixedTime)
                 .status(ReservationStatus.CONFIRMED)
                 .build();
 
-        //when
+        // when
         reservationRepository.save(reservation);
         Optional<Reservation> foundReservation = reservationRepository.findById(reservation.getId());
 
-        //then
+        // then
         assertTrue(foundReservation.isPresent());
-        assertEquals(reservation.getStore().getId(), foundReservation.get().getStore().getId());
-        assertEquals(reservation.getUser().getId(), foundReservation.get().getUser().getId());
-        assertEquals(reservation.getStatus(), foundReservation.get().getStatus());
-        assertEquals(reservation.getReservedAt(), foundReservation.get().getReservedAt());
+        assertEquals(store.getId(), foundReservation.get().getStore().getId());
+        assertEquals(user.getId(), foundReservation.get().getUser().getId());
+        assertEquals(ReservationStatus.CONFIRMED, foundReservation.get().getStatus());
+        assertEquals(fixedTime, foundReservation.get().getReservedAt());
     }
 }
