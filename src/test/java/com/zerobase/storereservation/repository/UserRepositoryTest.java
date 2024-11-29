@@ -1,6 +1,7 @@
 package com.zerobase.storereservation.repository;
 
 import com.zerobase.storereservation.entity.User;
+import com.zerobase.storereservation.entity.constants.Role;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +26,7 @@ class UserRepositoryTest {
         User user = User.builder()
                 .username("test")
                 .password("testPassword")
-                .role("CUSTOMER")
+                .role(Role.CUSTOMER)
                 .build();
 
         //when
