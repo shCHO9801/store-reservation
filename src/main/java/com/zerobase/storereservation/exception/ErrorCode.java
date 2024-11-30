@@ -17,7 +17,7 @@ public enum ErrorCode {
 
     // Reservation Error
     RESERVATION_NOT_FOUND(HttpStatus.BAD_REQUEST, "RESERVATION-001", "예약을 찾을 수 없습니다."),
-
+    ALREADY_CANCELLED(HttpStatus.BAD_REQUEST, "RESERVATION-002", "이미 취소된 예약입니다."),
     //Review Error
     REVIEW_NOT_FOUND(HttpStatus.BAD_REQUEST, "REVIEW-001", "리뷰가 존재하지 않습니다.");
 

@@ -26,4 +26,19 @@ public class ReservationController {
     ) {
         return ResponseEntity.ok(reservationService.getReservationById(id));
     }
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<ReservationDto.Response> cancelReservation(
+            @PathVariable Long id
+    ) {
+        return ResponseEntity.ok(reservationService.cancelReservation(id));
+    }
+
+    @PostMapping("/{id}/check-arrival")
+    public ResponseEntity<ReservationDto.CheckArrivalResponse> checkArrival(
+            @PathVariable Long id,
+            @RequestBody ReservationDto.CheckArrivalRequest request
+    ) {
+        return ResponseEntity.ok(reservationService.checkArrival(id, request.getArrivalTime()));
+    }
 }
