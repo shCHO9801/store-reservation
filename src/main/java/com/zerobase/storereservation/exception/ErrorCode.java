@@ -18,8 +18,10 @@ public enum ErrorCode {
     // Reservation Error
     RESERVATION_NOT_FOUND(HttpStatus.BAD_REQUEST, "RESERVATION-001", "예약을 찾을 수 없습니다."),
     ALREADY_CANCELLED(HttpStatus.BAD_REQUEST, "RESERVATION-002", "이미 취소된 예약입니다."),
+
     //Review Error
-    REVIEW_NOT_FOUND(HttpStatus.BAD_REQUEST, "REVIEW-001", "리뷰가 존재하지 않습니다.");
+    REVIEW_NOT_FOUND(HttpStatus.BAD_REQUEST, "REVIEW-001", "리뷰가 존재하지 않습니다."),
+    INVALID_RATING(HttpStatus.BAD_REQUEST, "REVIEW-002", "평점은 1에서 5 사이의 값이어야 합니다.");
 
     private final HttpStatus httpStatus;
     private final String code;      // 에러 코드를 숫자로 변환하면 클라이언트에서 파싱하기 편함

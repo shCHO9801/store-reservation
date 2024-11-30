@@ -12,6 +12,7 @@ public class ReviewDto {
         private Long storeId;
         private Long userId;
         private String content;
+        private int rating;
     }
 
     @Data
@@ -21,6 +22,13 @@ public class ReviewDto {
         private Long storeId;
         private Long userId;
         private String content;
+        private int rating;
         private LocalDateTime createdAt;
+    }
+
+    @Data
+    public static class UpdateRequest {
+        private String content;
+        private int rating;
     }
 }

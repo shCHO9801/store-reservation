@@ -29,11 +29,21 @@ public class ReviewController {
         return ResponseEntity.ok(reviewService.getReviewsByStore(storeId));
     }
 
+    @PutMapping("/{reviewId}")
+    public ResponseEntity<ReviewDto.Response> updateReview(
+            @PathVariable Long reviewId,
+            @RequestParam Long userId,
+            @RequestBody ReviewDto.UpdateRequest request
+    ) {
+        return ResponseEntity.ok(reviewService.updateReview(reviewId, userId, request));
+    }
+
     @DeleteMapping("/{reviewId}")
     public ResponseEntity<ReviewDto.Response> deleteReview(
-            @PathVariable Long reviewId
+            @PathVariable Long reviewId,
+            @RequestParam Long userId
     ) {
-        reviewService.deleteReview(reviewId);
+        reviewService.deleteReview(reviewId, userId);
         return ResponseEntity.noContent().build();
     }
 }

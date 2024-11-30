@@ -29,5 +29,8 @@ public class Review {
     private String content;             //리뷰 내용
 
     @Column(nullable = false)
+    private int rating;                 // 평점
+
+    @Column(nullable = false)
     private LocalDateTime createdAt;    // 리뷰 작성 시간
 }
