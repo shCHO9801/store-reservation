@@ -22,5 +22,7 @@ public class StoreDto {
         private String location;
         private String description;
         private Long ownerId;
+        private double averageRating;   // 평균 별점 (별점 순 정렬을 위함)
+        private double distance;        // 거리순 정렬을 위함
     }
 }
