@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/stores")
 @RequiredArgsConstructor
@@ -32,6 +34,18 @@ public class StoreController {
             @RequestBody StoreDto.CreateRequest request
     ) {
         return ResponseEntity.ok(storeService.updateStore(id, request));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<StoreDto.Response>> getStores(
+            @RequestParam(required = false, defaultValue = "name")
+            String sortBy,
+            @RequestParam(required = false) Double userLat,
+            @RequestParam(required = false) Double userLon
+    ) {
+        List<StoreDto.Response> stores =
+                storeService.getStores(sortBy, userLat, userLon);
+        return ResponseEntity.ok(stores);
     }
 
     @DeleteMapping("/{id}")

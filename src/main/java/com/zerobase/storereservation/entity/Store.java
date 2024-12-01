@@ -27,4 +27,10 @@ public class Store {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;             // 매장 소유자 (User와 연관 관계)
+
+    @Column
+    private double averageRating;   // 매장 평균 별점
+
+    @Column
+    private double distance;        // 매장 거리
 }

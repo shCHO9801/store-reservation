@@ -14,6 +14,8 @@ public enum ErrorCode {
     // Store Error
     STORE_NOT_FOUND(HttpStatus.BAD_REQUEST, "STORE-001", "상점을 찾을 수 없습니다."),
     UNAUTHORIZED_ACTION(HttpStatus.FORBIDDEN, "STORE-002", "상점 소유자가 아니어서 권한이 없습니다."),
+    INVALID_CRITERIA(HttpStatus.BAD_REQUEST, "STORE-003", "정렬 조건이 유효하지 않습니다."),
+    INVALID_LOCATION(HttpStatus.BAD_REQUEST, "STORE-004", "위치 값이 유효하지 않습니다."),
 
     // Reservation Error
     RESERVATION_NOT_FOUND(HttpStatus.BAD_REQUEST, "RESERVATION-001", "예약을 찾을 수 없습니다."),
