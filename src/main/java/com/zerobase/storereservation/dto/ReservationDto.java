@@ -14,7 +14,7 @@ public class ReservationDto {
     public static class CreateRequest {
         private Long storeId;
         private Long userId;
-
+        private String phoneNumber;
         @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
         private LocalDateTime reservedAt;
     }
@@ -25,10 +25,9 @@ public class ReservationDto {
         private Long id;
         private Long storeId;
         private Long userId;
-
+        private String phoneNumber;
         @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
         private LocalDateTime reservedAt;
-
         private ReservationStatus status;
     }
 
