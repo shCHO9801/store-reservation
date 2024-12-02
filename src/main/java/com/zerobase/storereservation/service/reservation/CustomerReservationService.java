@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 import static com.zerobase.storereservation.entity.constants.ReservationStatus.CANCELLED;
 import static com.zerobase.storereservation.entity.constants.ReservationStatus.CONFIRMED;
 import static com.zerobase.storereservation.exception.ErrorCode.*;
@@ -51,7 +53,29 @@ public class CustomerReservationService {
 
     public ReservationDto.Response getReservation(Long id) {
         Reservation reservation = reservationRepository.findById(id)
-                .orElseThrow(() -> new CustomException(STORE_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(RESERVATION_NOT_FOUND));
+        return ReservationDto.Response.builder()
+                .id(reservation.getId())
+                .storeId(reservation.getStore().getId())
+                .userId(reservation.getUser().getId())
+                .reservedAt(reservation.getReservedAt())
+                .status(reservation.getStatus())
+                .build();
+    }
+    @Transactional
+    public ReservationDto.Response cancelReservation(Long ReservationId, Long userId) {
+        Reservation reservation = reservationRepository.findById(ReservationId)
+                .orElseThrow(() -> new CustomException(RESERVATION_NOT_FOUND));
+        if(!reservation.getUser().getId().equals(userId)) {
+            throw new CustomException(UNAUTHORIZED_ACTION);
+        }
+
+        if (reservation.getStatus() == CANCELLED) {
+            throw new CustomException(ALREADY_CANCELLED);
+        }
+
+        reservation.setStatus(CANCELLED);
+
         return ReservationDto.Response.builder()
                 .id(reservation.getId())
                 .storeId(reservation.getStore().getId())
@@ -61,4 +85,27 @@ public class CustomerReservationService {
                 .build();
     }
 
+    @Transactional
+    public ReservationDto.CheckArrivalResponse checkArrival(
+            Long reservationId, Long storeId, LocalDateTime arrivalTime) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new CustomException(RESERVATION_NOT_FOUND));
+
+        if(!reservation.getStore().getId().equals(storeId)) {
+            throw new CustomException(UNAUTHORIZED_ACTION);
+        }
+
+        if(reservation.getStatus() == CANCELLED){
+            throw new CustomException(ALREADY_CANCELLED);
+        }
+
+        boolean arrived = arrivalTime.isAfter(
+                reservation.getReservedAt().minusMinutes(10))
+                && arrivalTime.isBefore(reservation.getReservedAt());
+
+        return ReservationDto.CheckArrivalResponse.builder()
+                .reservationId(reservation.getId())
+                .arrived(arrived)
+                .build();
+    }
 }
