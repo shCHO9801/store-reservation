@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/customer/reservations")
@@ -39,5 +40,12 @@ public class CustomerReservationController {
     ) {
         return ResponseEntity.ok(
                 reservationService.checkArrival(id, storeId, arrivalTime));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<ReservationDto.Response>> getReservations(
+            @RequestParam Long userId
+    ) {
+        return ResponseEntity.ok(reservationService.getCustomerReservations(userId));
     }
 }

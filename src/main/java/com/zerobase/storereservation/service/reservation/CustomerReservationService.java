@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.zerobase.storereservation.entity.constants.ReservationStatus.CANCELLED;
 import static com.zerobase.storereservation.entity.constants.ReservationStatus.CONFIRMED;
@@ -109,5 +111,18 @@ public class CustomerReservationService {
                 .reservationId(reservation.getId())
                 .arrived(arrived)
                 .build();
+    }
+
+    public List<ReservationDto.Response> getCustomerReservations(Long userId) {
+        List<Reservation> reservations = reservationRepository.findByUserId(userId);
+        return reservations.stream()
+                .map(reservation -> ReservationDto.Response.builder()
+                        .id(reservation.getId())
+                        .storeId(reservation.getStore().getId())
+                        .userId(reservation.getUser().getId())
+                        .phoneNumber(reservation.getPhoneNumber())
+                        .reservedAt(reservation.getReservedAt())
+                        .status(reservation.getStatus())
+                        .build()).collect(Collectors.toList());
     }
 }
