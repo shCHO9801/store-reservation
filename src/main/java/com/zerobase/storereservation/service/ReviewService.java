@@ -4,8 +4,10 @@ import com.zerobase.storereservation.dto.ReviewDto;
 import com.zerobase.storereservation.entity.Review;
 import com.zerobase.storereservation.entity.Store;
 import com.zerobase.storereservation.entity.User;
+import com.zerobase.storereservation.entity.constants.ReservationStatus;
 import com.zerobase.storereservation.exception.CustomException;
 import com.zerobase.storereservation.exception.ErrorCode;
+import com.zerobase.storereservation.repository.ReservationRepository;
 import com.zerobase.storereservation.repository.ReviewRepository;
 import com.zerobase.storereservation.repository.StoreRepository;
 import com.zerobase.storereservation.repository.UserRepository;
@@ -17,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.zerobase.storereservation.entity.constants.ReservationStatus.CONFIRMED;
 import static com.zerobase.storereservation.exception.ErrorCode.*;
 
 @Service
@@ -27,10 +30,20 @@ public class ReviewService {
     private final UserRepository userRepository;
     private final StoreRepository storeRepository;
     private final StoreService storeService;
+    private final ReservationRepository reservationRepository;
 
     public ReviewDto.Response createReview(ReviewDto.CreateRequest request) {
         if (request.getRating() < 1 || request.getRating() > 5) {
             throw new CustomException(ErrorCode.INVALID_RATING);
+        }
+
+        boolean isReservationValid =
+                reservationRepository.existsByUserIdAndStoreIdAndStatus(
+                        request.getUserId(), request.getStoreId(), CONFIRMED
+                );
+
+        if(!isReservationValid) {
+            throw new CustomException(RESERVATION_NOT_FOUND);
         }
 
         Store store = storeRepository.findById(request.getStoreId())

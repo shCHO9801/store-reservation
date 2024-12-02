@@ -4,8 +4,10 @@ import com.zerobase.storereservation.dto.ReviewDto;
 import com.zerobase.storereservation.entity.Review;
 import com.zerobase.storereservation.entity.Store;
 import com.zerobase.storereservation.entity.User;
+import com.zerobase.storereservation.entity.constants.ReservationStatus;
 import com.zerobase.storereservation.exception.CustomException;
 import com.zerobase.storereservation.exception.ErrorCode;
+import com.zerobase.storereservation.repository.ReservationRepository;
 import com.zerobase.storereservation.repository.ReviewRepository;
 import com.zerobase.storereservation.repository.StoreRepository;
 import com.zerobase.storereservation.repository.UserRepository;
@@ -21,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static com.zerobase.storereservation.entity.constants.ReservationStatus.CONFIRMED;
 import static com.zerobase.storereservation.exception.ErrorCode.REVIEW_NOT_FOUND;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -38,6 +41,9 @@ class ReviewServiceTest {
     private StoreRepository storeRepository;
 
     @Mock
+    private ReservationRepository reservationRepository;
+
+    @Mock
     private StoreService storeService;
 
     @InjectMocks
@@ -53,19 +59,17 @@ class ReviewServiceTest {
     void createReviewSuccess() {
         //given
         Store store = Store.builder()
-                .id(1L)
-                .name("Test Store")
-                .build();
+                .id(1L).name("Test Store").build();
 
         User user = User.builder()
-                .id(1L)
-                .username("Test User")
-                .build();
+                .id(1L).username("Test User").build();
 
-        when(storeRepository.findById(1L))
-                .thenReturn(Optional.of(store));
-        when(userRepository.findById(1L))
-                .thenReturn(Optional.of(user));
+        when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(reservationRepository.existsByUserIdAndStoreIdAndStatus(
+                1L, 1L, CONFIRMED
+        )).thenReturn(true);
+        doNothing().when(storeService).updateAverageRating(1L);
 
         ReviewDto.CreateRequest request =
                 new ReviewDto.CreateRequest();
@@ -83,12 +87,10 @@ class ReviewServiceTest {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        when(reviewRepository.save(any())).thenReturn(savedReview)
-                .thenReturn(savedReview);
+        when(reviewRepository.save(any())).thenReturn(savedReview);
 
         //when
-        ReviewDto.Response response =
-                reviewService.createReview(request);
+        ReviewDto.Response response = reviewService.createReview(request);
 
         //then
         assertNotNull(response);
@@ -115,6 +117,26 @@ class ReviewServiceTest {
     }
 
     @Test
+    @DisplayName("리뷰 등록 실패 - 예약 없음")
+    void createReviewFailNoReservation() {
+        //given
+        when(reservationRepository.existsByUserIdAndStoreIdAndStatus(
+                1L, 1L, CONFIRMED
+        )).thenReturn(false);
+
+        ReviewDto.CreateRequest request = new ReviewDto.CreateRequest();
+        request.setStoreId(1L);
+        request.setUserId(1L);
+        request.setContent("Great Place");
+        request.setRating(3);
+
+        //when&then
+        CustomException e = assertThrows(CustomException.class,
+                () -> reviewService.createReview(request));
+        assertEquals(ErrorCode.RESERVATION_NOT_FOUND, e.getErrorCode());
+    }
+
+    @Test
     @DisplayName("리뷰 등록 실패 - 존재하지 않는 매장")
     void createReviewStoreNotFound() {
         //given
@@ -125,6 +147,10 @@ class ReviewServiceTest {
         request.setUserId(1L);
         request.setRating(3);
         request.setContent("Store not found test");
+
+        when(reservationRepository.existsByUserIdAndStoreIdAndStatus(
+                1L, 1L, CONFIRMED
+        )).thenReturn(true);
 
         //when&then
         CustomException exception = assertThrows(CustomException.class,
@@ -145,6 +171,9 @@ class ReviewServiceTest {
         request.setUserId(1L);
         request.setRating(3);
         request.setContent("User not found test");
+        when(reservationRepository.existsByUserIdAndStoreIdAndStatus(
+                1L, 1L, CONFIRMED
+        )).thenReturn(true);
 
         //when&then
         CustomException exception = assertThrows(CustomException.class,

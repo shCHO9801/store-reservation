@@ -1,10 +1,13 @@
 package com.zerobase.storereservation.service;
 
 import com.zerobase.storereservation.dto.ReviewDto;
+import com.zerobase.storereservation.entity.Reservation;
 import com.zerobase.storereservation.entity.Review;
 import com.zerobase.storereservation.entity.Store;
 import com.zerobase.storereservation.entity.User;
+import com.zerobase.storereservation.entity.constants.ReservationStatus;
 import com.zerobase.storereservation.exception.CustomException;
+import com.zerobase.storereservation.repository.ReservationRepository;
 import com.zerobase.storereservation.repository.ReviewRepository;
 import com.zerobase.storereservation.repository.StoreRepository;
 import com.zerobase.storereservation.repository.UserRepository;
@@ -16,10 +19,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
+import static com.zerobase.storereservation.entity.constants.ReservationStatus.CONFIRMED;
 import static com.zerobase.storereservation.entity.constants.Role.CUSTOMER;
 import static com.zerobase.storereservation.entity.constants.Role.PARTNER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -38,8 +45,15 @@ public class ReviewServiceIntegrationTest {
     @Autowired
     private ReviewRepository reviewRepository;
 
+    @Autowired
+    private ReservationRepository reservationRepository;
+
     private Store store;
     private User user;
+    private Reservation reservation;
+
+    @Autowired
+    private StoreService storeService;
 
     @BeforeEach
     void setUp() {
@@ -66,6 +80,15 @@ public class ReviewServiceIntegrationTest {
                         .description("Test Description")
                         .averageRating(0.0)
                         .owner(owner)
+                        .build()
+        );
+        reservation = reservationRepository.save(
+                Reservation.builder()
+                        .user(user)
+                        .store(store)
+                        .phoneNumber("010-1234-5678")
+                        .status(CONFIRMED)
+                        .reservedAt(LocalDateTime.now())
                         .build()
         );
     }
@@ -149,9 +172,19 @@ public class ReviewServiceIntegrationTest {
         //given
         User anotherUser = userRepository.save(
                 User.builder()
-                        .username("anouther User")
+                        .username("another User")
                         .password("password")
                         .role(CUSTOMER)
+                        .build()
+        );
+
+        reservationRepository.save(
+                Reservation.builder()
+                        .user(anotherUser)
+                        .store(store)
+                        .phoneNumber("010-1234-5678")
+                        .status(CONFIRMED)
+                        .reservedAt(LocalDateTime.now())
                         .build()
         );
 

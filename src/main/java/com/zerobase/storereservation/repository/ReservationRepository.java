@@ -1,9 +1,11 @@
 package com.zerobase.storereservation.repository;
 
 import com.zerobase.storereservation.entity.Reservation;
+import com.zerobase.storereservation.entity.constants.ReservationStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.security.core.parameters.P;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -19,4 +21,13 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate
     );
+
+    @Query("select case when count(r) > 0 then true else false end " +
+            "from Reservation r " +
+            "where r.user.id = :userId and r.store.id = :storeId " +
+            "and r.status = :status")
+    boolean existsByUserIdAndStoreIdAndStatus(
+            @Param("userId") Long userId,
+            @Param("storeId") Long storeId,
+            @Param("status") ReservationStatus reservationStatus);
 }
