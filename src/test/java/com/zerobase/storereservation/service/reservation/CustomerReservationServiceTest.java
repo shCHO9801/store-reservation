@@ -58,6 +58,7 @@ class CustomerReservationServiceTest {
         ReservationDto.CreateRequest request = new ReservationDto.CreateRequest();
         request.setUserId(user.getId());
         request.setStoreId(store.getId());
+        request.setPhoneNumber("010-1234-5678");
         request.setReservedAt(LocalDateTime.now());
 
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
@@ -67,6 +68,7 @@ class CustomerReservationServiceTest {
                 .id(1L)
                 .user(user)
                 .store(store)
+                .phoneNumber("010-1234-5678")
                 .reservedAt(request.getReservedAt())
                 .build();
 
@@ -81,6 +83,7 @@ class CustomerReservationServiceTest {
         assertEquals(savedReservation.getId(), result.getId());
         assertEquals(savedReservation.getUser().getId(), result.getUserId());
         assertEquals(savedReservation.getStore().getId(), result.getStoreId());
+        assertEquals(savedReservation.getPhoneNumber(), result.getPhoneNumber());
     }
 
     @Test

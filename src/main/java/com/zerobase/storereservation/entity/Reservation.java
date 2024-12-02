@@ -26,6 +26,9 @@ public class Reservation {
     private User user; // 예약한 사용자
 
     @Column(nullable = false)
+    private String phoneNumber;     // 예약자 전화번호
+
+    @Column(nullable = false)
     private LocalDateTime reservedAt; // 예약 시간
 
     @Enumerated(EnumType.STRING)

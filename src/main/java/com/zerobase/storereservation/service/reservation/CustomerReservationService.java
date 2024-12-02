@@ -37,6 +37,7 @@ public class CustomerReservationService {
         Reservation reservation = Reservation.builder()
                 .user(user)
                 .store(store)
+                .phoneNumber(request.getPhoneNumber())
                 .reservedAt(request.getReservedAt())
                 .status(CONFIRMED)
                 .build();
@@ -46,6 +47,7 @@ public class CustomerReservationService {
                 .id(reservation.getId())
                 .storeId(store.getId())
                 .userId(user.getId())
+                .phoneNumber(request.getPhoneNumber())
                 .reservedAt(reservation.getReservedAt())
                 .status(reservation.getStatus())
                 .build();
