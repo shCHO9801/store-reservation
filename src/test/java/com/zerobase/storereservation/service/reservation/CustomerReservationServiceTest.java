@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static com.zerobase.storereservation.entity.constants.ReservationStatus.CANCELLED;
@@ -257,5 +258,39 @@ class CustomerReservationServiceTest {
         //then
         assertNotNull(result);
         assertFalse(result.isArrived());
+    }
+
+    @Test
+    @DisplayName("고객 예약 목록 조회 성공")
+    void getCustomerReservationSuccess() {
+        //given
+        Reservation reservation1 = Reservation.builder()
+                .id(1L)
+                .user(user)
+                .store(store)
+                .reservedAt(LocalDateTime.now())
+                .status(CONFIRMED)
+                .build();
+
+        Reservation reservation2 = Reservation.builder()
+                .id(2L)
+                .user(user)
+                .store(store)
+                .reservedAt(LocalDateTime.now().plusHours(1))
+                .status(CONFIRMED)
+                .build();
+
+        when(reservationRepository.findByUserId(user.getId()))
+                .thenReturn(List.of(reservation1, reservation2));
+
+        //when
+        List<ReservationDto.Response> result =
+                reservationService.getCustomerReservations(user.getId());
+
+        //then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        assertEquals(reservation1.getId(), result.get(0).getId());
+        assertEquals(reservation2.getId(), result.get(1).getId());
     }
 }
