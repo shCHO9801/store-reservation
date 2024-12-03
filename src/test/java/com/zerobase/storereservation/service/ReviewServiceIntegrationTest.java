@@ -76,9 +76,10 @@ public class ReviewServiceIntegrationTest {
         store = storeRepository.save(
                 Store.builder()
                         .name("Test Store")
-                        .location("123, 456")
                         .description("Test Description")
                         .averageRating(0.0)
+                        .latitude(123.0)
+                        .longitude(456.0)
                         .owner(owner)
                         .build()
         );
