@@ -1,16 +1,18 @@
 package com.zerobase.storereservation.controller.auth;
 
+import com.zerobase.storereservation.dto.UserDto;
 import com.zerobase.storereservation.entity.User;
 import com.zerobase.storereservation.entity.constants.Role;
+import com.zerobase.storereservation.exception.CustomException;
+import com.zerobase.storereservation.exception.ErrorCode;
 import com.zerobase.storereservation.repository.UserRepository;
 import com.zerobase.storereservation.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -29,7 +31,7 @@ public class AuthenticationController {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         if(user.getRole() == null) {
-            user.setRole(Role.CUSTOMER);
+            user.setRole(com.zerobase.storereservation.entity.constants.Role.CUSTOMER);
         }
         userRepository.save(user);
         return ResponseEntity.ok().body("User registered successfully");
@@ -46,5 +48,28 @@ public class AuthenticationController {
 
         String token = jwtUtil.generateToken(existingUser.getUsername());
         return ResponseEntity.ok().body("Bearer " + token);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getMe() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        String username;
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
+            username = ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();
+        } else {
+            username = principal.toString();
+        }
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        return ResponseEntity.ok(
+                UserDto.Response.builder()
+                        .id(user.getId())
+                        .username(user.getUsername())
+                        .role(user.getRole())
+                        .build()
+        );
     }
 }

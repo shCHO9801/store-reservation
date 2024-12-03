@@ -5,6 +5,7 @@ import com.zerobase.storereservation.service.reservation.CustomerReservationServ
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -16,6 +17,7 @@ public class CustomerReservationController {
 
     private final CustomerReservationService reservationService;
 
+    @PreAuthorize("hasRole('CUSTOMER')")
     @PostMapping
     public ResponseEntity<ReservationDto.Response> createReservation(
             @RequestBody ReservationDto.CreateRequest request
@@ -23,6 +25,7 @@ public class CustomerReservationController {
         return ResponseEntity.ok(reservationService.createReservation(request));
     }
 
+    @PreAuthorize("hasRole('CUSTOMER')")
     @GetMapping("/{id}")
     public ResponseEntity<ReservationDto.Response> getReservation(
             @PathVariable Long id
