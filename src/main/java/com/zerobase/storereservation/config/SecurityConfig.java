@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -23,26 +24,29 @@ public class SecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtUtil jwtUtil)
+    public SecurityFilterChain securityFilterChain(HttpSecurity http)
             throws Exception {
         http.csrf(csrf -> csrf.disable())
-                .cors(
-                        cors -> cors.configurationSource(corsConfigurationSource())
-                ) // CORS 설정
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // CORS 설정
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/protected-endpoint").authenticated()
+                        .requestMatchers("/api/auth/signup", "/api/auth/login").permitAll()
+                        .requestMatchers("/api/auth/me").authenticated()
+                        .requestMatchers("/stores/**").hasRole("PARTNER")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(customAuthenticationEntryPoint))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationProvider(authenticationProvider())
                 .addFilterBefore(
-                        new JwtAuthenticationFilter(jwtUtil),
+                        jwtAuthenticationFilter, // 빈으로 주입받은 필터 사용
                         UsernamePasswordAuthenticationFilter.class
                 );
         return http.build();
     }
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();

@@ -5,6 +5,7 @@ import com.zerobase.storereservation.service.reservation.OwnerReservationService
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -17,6 +18,7 @@ public class OwnerReservationController {
 
     private final OwnerReservationService reservationService;
 
+    @PreAuthorize("hasRole('PARTNER')")
     @GetMapping("/store/{storeId}/owner/{ownerId}")
     public ResponseEntity<List<ReservationDto.Response>> getReservationsByStore(
             @PathVariable Long storeId,

@@ -1,9 +1,10 @@
 package com.zerobase.storereservation.exception;
 
+import org.springframework.security.core.AuthenticationException;
 import lombok.Getter;
 
 @Getter
-public class JwtException extends RuntimeException {
+public class JwtException extends AuthenticationException {
     private final JwtErrorType errorType;
 
     public JwtException(JwtErrorType errorType) {

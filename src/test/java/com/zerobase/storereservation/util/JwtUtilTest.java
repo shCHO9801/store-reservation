@@ -21,7 +21,7 @@ class JwtUtilTest {
 
     @Test
     @DisplayName("JWT 토큰 생성 및 검증")
-    void testGenerateAndValidateToken() {
+    void testGenerateAndValidateToken() throws JwtException {
         //given
         String username = "testUser";
 
