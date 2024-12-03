@@ -19,10 +19,7 @@ public class Store {
     private String name;             // 매장 이름
 
     @Column(nullable = false)
-    private String location;         // 매장 위치
-
-    @Column(columnDefinition = "TEXT")
-    private String description;     //매장 설명
+    private String description;     // 매장 설명
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
@@ -31,6 +28,12 @@ public class Store {
     @Column
     private double averageRating;   // 매장 평균 별점
 
-    @Column
-    private double distance;        // 매장 거리
+    @Transient
+    private double distance;        // 매장 거리 (계산된 값, DB에 저장되지 않음)
+
+    @Column(nullable = false)
+    private Double latitude;        // 위도
+
+    @Column(nullable = false)
+    private Double longitude;       // 경도
 }

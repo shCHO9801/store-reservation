@@ -3,6 +3,7 @@ package com.zerobase.storereservation.service;
 import com.zerobase.storereservation.dto.StoreDto;
 import com.zerobase.storereservation.entity.Store;
 import com.zerobase.storereservation.entity.User;
+import com.zerobase.storereservation.entity.constants.Role;
 import com.zerobase.storereservation.exception.CustomException;
 import com.zerobase.storereservation.exception.ErrorCode;
 import com.zerobase.storereservation.repository.StoreRepository;
@@ -50,18 +51,21 @@ class StoreServiceTest {
         //given
         StoreDto.CreateRequest request = new StoreDto.CreateRequest();
         request.setName("Test Store");
-        request.setLocation("Test Location");
         request.setDescription("Test Description");
         request.setOwnerId(1L);
+        request.setLatitude(37.7749);
+        request.setLongitude(-122.4194);
 
         User mockUser = User.builder().id(1L).build();
 
         Store mockStore = Store.builder()
                 .id(1L)
                 .name("Test Store")
-                .location("Test Location")
                 .description("Test Description")
                 .owner(mockUser)
+                .averageRating(0.0)
+                .latitude(37.7749)
+                .longitude(-122.4194)
                 .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser));
@@ -73,8 +77,9 @@ class StoreServiceTest {
         //then
         assertNotNull(response);
         assertEquals("Test Store", response.getName());
-        assertEquals("Test Location", response.getLocation());
         assertEquals("Test Description", response.getDescription());
+        assertEquals(37.7749, response.getLatitude());
+        assertEquals(-122.4194, response.getLongitude());
         verify(userRepository, times(1)).findById(1L);
         verify(storeRepository, times(1)).save(any(Store.class));
     }
@@ -103,9 +108,11 @@ class StoreServiceTest {
         Store mockStore = Store.builder()
                 .id(storeId)
                 .name("Test Store")
-                .location("Test Location")
                 .description("Test Description")
                 .owner(mockUser)
+                .averageRating(4.5)
+                .latitude(37.7749)
+                .longitude(-122.4194)
                 .build();
 
         when(storeRepository.findById(storeId))
@@ -141,16 +148,24 @@ class StoreServiceTest {
         Long storeId = 1L;
         StoreDto.CreateRequest request = new StoreDto.CreateRequest();
         request.setName("Update Store");
-        request.setLocation("Update Location");
         request.setDescription("Update Description");
+        request.setLatitude(40.7128);
+        request.setLongitude(-74.0060);
 
-        User mockUser = User.builder().id(1L).build();
+        User mockUser = User.builder()
+                .id(1L)
+                .username("testusername")
+                .password("testpassword")
+                .role(Role.PARTNER)
+                .build();
         Store mockStore = Store.builder()
                 .id(storeId)
                 .name("Original Store")
-                .location("Original Location")
                 .description("Original Description")
                 .owner(mockUser)
+                .averageRating(4.0)
+                .latitude(37.7749)
+                .longitude(-122.4194)
                 .build();
 
         mockSecurityContext(mockUser);
@@ -165,8 +180,9 @@ class StoreServiceTest {
         //then
         assertNotNull(response);
         assertEquals("Update Store", response.getName());
-        assertEquals("Update Location", response.getLocation());
         assertEquals("Update Description", response.getDescription());
+        assertEquals(40.7128, response.getLatitude());
+        assertEquals(-74.0060, response.getLongitude());
         verify(storeRepository, times(1)).findById(storeId);
         verify(storeRepository, times(1)).save(any(Store.class));
     }
@@ -250,10 +266,11 @@ class StoreServiceTest {
     }
 
     private void mockSecurityContext(User mockUser) {
+        UserDetailsImpl userDetails = new UserDetailsImpl(mockUser);
         Authentication mockAuth = mock(Authentication.class);
         SecurityContext mockSecurityContext = mock(SecurityContext.class);
         when(mockSecurityContext.getAuthentication()).thenReturn(mockAuth);
-        when(mockAuth.getPrincipal()).thenReturn(mockUser);
+        when(mockAuth.getPrincipal()).thenReturn(userDetails);
         SecurityContextHolder.setContext(mockSecurityContext);
     }
 }

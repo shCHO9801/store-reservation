@@ -10,8 +10,10 @@ import com.zerobase.storereservation.repository.ReviewRepository;
 import com.zerobase.storereservation.repository.StoreRepository;
 import com.zerobase.storereservation.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -22,6 +24,7 @@ import static com.zerobase.storereservation.exception.ErrorCode.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class StoreService {
 
     private final StoreRepository storeRepository;
@@ -44,24 +47,29 @@ public class StoreService {
     }
 
     public StoreDto.Response createStore(StoreDto.CreateRequest request) {
+        log.info("매장 생성 요청: {}", request.getName());
         User owner = userRepository.findById(request.getOwnerId())
                 .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
         Store store = Store.builder()
                 .name(request.getName())
-                .location(request.getLocation())
                 .description(request.getDescription())
                 .owner(owner)
+                .latitude(request.getLatitude())
+                .longitude(request.getLongitude())
                 .build();
 
         store = storeRepository.save(store);
+        log.info("매장 생성 완료: {}", store.getName());
 
         return StoreDto.Response.builder()
                 .id(store.getId())
                 .name(store.getName())
-                .location(store.getLocation())
                 .description(store.getDescription())
                 .ownerId(store.getOwner().getId())
+                .averageRating(store.getAverageRating())
+                .latitude(store.getLatitude())
+                .longitude(store.getLongitude())
                 .build();
     }
 
@@ -72,9 +80,11 @@ public class StoreService {
         return StoreDto.Response.builder()
                 .id(store.getId())
                 .name(store.getName())
-                .location(store.getLocation())
                 .description(store.getDescription())
                 .ownerId(store.getOwner().getId())
+                .averageRating(store.getAverageRating())
+                .latitude(store.getLatitude())
+                .longitude(store.getLongitude())
                 .build();
     }
 
@@ -85,16 +95,19 @@ public class StoreService {
         validateOwnership(store);
 
         store.setName(request.getName());
-        store.setLocation(request.getLocation());
         store.setDescription(request.getDescription());
+        store.setLatitude(request.getLatitude());
+        store.setLongitude(request.getLongitude());
 
         storeRepository.save(store);
         return StoreDto.Response.builder()
                 .id(store.getId())
                 .name(store.getName())
-                .location(store.getLocation())
                 .description(store.getDescription())
                 .ownerId(store.getOwner().getId())
+                .averageRating(store.getAverageRating())
+                .latitude(store.getLatitude())
+                .longitude(store.getLongitude())
                 .build();
     }
 
@@ -122,40 +135,41 @@ public class StoreService {
 
         List<Store> stores = storeRepository.findAll();
 
-        if ("distance".equals(sortBy)) {
-            stores.forEach(store -> {
-                Double distance = calculateDistance(userLat, userLon,
-                        Double.parseDouble(store.getLocation().split(",")[0]),
-                        Double.parseDouble(store.getLocation().split(",")[1])
-                );
-                store.setDistance(distance);
-            });
-            storeRepository.saveAll(stores);
-        }
+        List<StoreDto.Response> responses = stores.stream()
+                .map(store -> {
+                    double distance = 0.0;
+                    if("distance".equals(sortBy)) {
+                        distance = calculateDistance(userLat, userLon,
+                                store.getLatitude(), store.getLongitude());
+                    }
+                    return StoreDto.Response.builder()
+                            .id(store.getId())
+                            .name(store.getName())
+                            .description(store.getDescription())
+                            .ownerId(store.getOwner().getId())
+                            .averageRating(store.getAverageRating())
+                            .distance(distance)
+                            .build();
+                }).collect(Collectors.toList());
 
         switch (sortBy) {
             case "name":
-                stores.sort(Comparator.comparing(Store::getName));
+                responses.sort(Comparator.comparing(StoreDto.Response::getName));
                 break;
             case "rating":
-                stores.sort(Comparator.comparingDouble(Store::getAverageRating).reversed());
+                responses.sort(Comparator
+                        .comparingDouble(StoreDto.Response::getAverageRating)
+                        .reversed()
+                );
                 break;
             case "distance":
-                stores.sort(Comparator.comparingDouble(Store::getDistance));
+                responses.sort(Comparator
+                        .comparingDouble(StoreDto.Response::getDistance)
+                );
                 break;
         }
 
-        return stores.stream()
-                .map(store -> StoreDto.Response.builder()
-                        .id(store.getId())
-                        .name(store.getName())
-                        .location(store.getLocation())
-                        .description(store.getDescription())
-                        .ownerId(store.getOwner().getId())
-                        .averageRating(store.getAverageRating())
-                        .distance(store.getDistance())
-                        .build()
-                ).collect(Collectors.toList());
+        return responses;
     }
 
     private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
@@ -170,9 +184,16 @@ public class StoreService {
     }
 
     private void validateOwnership(Store store) {
-        Authentication auth = SecurityContextHolder
-                .getContext().getAuthentication();
-        User currentUser = (User) auth.getPrincipal();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Object principal = auth.getPrincipal();
+
+        if (!(principal instanceof UserDetailsImpl)) {
+            throw new CustomException(UNAUTHORIZED_ACTION);
+        }
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) principal;
+        User currentUser = userDetails.getUser();
+
         if (!store.getOwner().getId().equals(currentUser.getId())) {
             throw new CustomException(UNAUTHORIZED_ACTION);
         }
