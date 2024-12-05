@@ -33,5 +33,5 @@ public class Reservation {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ReservationStatus status; // 예약 상태 (CONFIRMED, CANCELLED 등)
+    private ReservationStatus status = ReservationStatus.PENDING; // 예약 상태 (CONFIRMED, CANCELLED 등)
 }

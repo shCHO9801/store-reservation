@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.zerobase.storereservation.entity.constants.ReservationStatus;
 import lombok.Builder;
 import lombok.Data;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 
@@ -34,6 +33,10 @@ public class ReservationDto {
     @Data
     public static class CancelRequest {
         private String reason;  // 취소 사유
+
+        public CancelRequest(String reason) {
+            this.reason = reason;
+        }
     }
 
     @Data
