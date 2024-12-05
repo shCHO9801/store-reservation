@@ -27,4 +27,33 @@ public class OwnerReservationController {
             ){
         return ResponseEntity.ok(reservationService.getReservationsByStore(ownerId,storeId,date));
     }
+
+    @PreAuthorize("hasRole('PARTNER')")
+    @GetMapping("/pending")
+    public ResponseEntity<List<ReservationDto.Response>> getPendingReservations(
+            @RequestParam Long storeId
+    ) {
+        return ResponseEntity.ok(reservationService.getPendingReservations(storeId));
+    }
+
+    @PreAuthorize("hasRole('PARTNER')")
+    @PutMapping("/{reservationId}/approve")
+    public ResponseEntity<ReservationDto.Response> approveReservation(
+            @PathVariable Long reservationId
+    ) {
+        return ResponseEntity.ok(reservationService.approveReservation(reservationId));
+    }
+
+    @PreAuthorize("hasRole('PARTNER')")
+    @PutMapping("/{reservationId}/reject")
+    public ResponseEntity<ReservationDto.Response> rejectReservation(
+            @PathVariable Long reservationId,
+            @RequestBody ReservationDto.CancelRequest cancelRequest
+    ) {
+        return ResponseEntity.ok(
+                reservationService.rejectReservation(
+                        reservationId, cancelRequest
+                )
+        );
+    }
 }

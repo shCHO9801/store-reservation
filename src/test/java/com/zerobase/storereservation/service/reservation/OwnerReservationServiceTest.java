@@ -4,6 +4,7 @@ import com.zerobase.storereservation.dto.ReservationDto;
 import com.zerobase.storereservation.entity.Reservation;
 import com.zerobase.storereservation.entity.Store;
 import com.zerobase.storereservation.entity.User;
+import com.zerobase.storereservation.entity.constants.ReservationStatus;
 import com.zerobase.storereservation.entity.constants.Role;
 import com.zerobase.storereservation.exception.CustomException;
 import com.zerobase.storereservation.exception.ErrorCode;
@@ -150,5 +151,52 @@ class OwnerReservationServiceTest {
                         owner.getId(), otherStore.getId(), LocalDateTime.now()
                 ));
         assertEquals(UNAUTHORIZED_ACTION, e.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("점주가 예약 승인 성공")
+    void approveReservationSuccess() {
+        //given
+        Reservation reservation = Reservation.builder()
+                .id(1L)
+                .store(store)
+                .user(User.builder().id(2L).build())
+                .status(ReservationStatus.PENDING)
+                .build();
+
+        when(reservationRepository.findById(reservation.getId())).
+                thenReturn(Optional.of(reservation));
+
+        //when
+        ReservationDto.Response result =
+                ownerReservationService.approveReservation(reservation.getId());
+
+        //then
+        assertEquals(ReservationStatus.CONFIRMED, result.getStatus());
+    }
+
+    @Test
+    @DisplayName("점주가 예약 거절 성공")
+    void rejectReservationSuccess() {
+        //given
+        Reservation reservation = Reservation.builder()
+                .id(1L)
+                .store(store)
+                .user(User.builder().id(2L).build())
+                .status(ReservationStatus.PENDING)
+                .build();
+
+        when(reservationRepository.findById(reservation.getId()))
+                .thenReturn(Optional.of(reservation));
+
+        //when
+        ReservationDto.Response result =
+                ownerReservationService.rejectReservation(
+                        reservation.getId(),
+                        new ReservationDto.CancelRequest("점주가 거절함")
+                );
+
+        //then
+        assertEquals(ReservationStatus.REJECTED, result.getStatus());
     }
 }

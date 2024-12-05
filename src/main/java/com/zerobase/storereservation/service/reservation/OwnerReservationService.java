@@ -4,12 +4,14 @@ import com.zerobase.storereservation.dto.ReservationDto;
 import com.zerobase.storereservation.entity.Reservation;
 import com.zerobase.storereservation.entity.Store;
 import com.zerobase.storereservation.entity.User;
+import com.zerobase.storereservation.entity.constants.ReservationStatus;
 import com.zerobase.storereservation.exception.CustomException;
 import com.zerobase.storereservation.repository.ReservationRepository;
 import com.zerobase.storereservation.repository.StoreRepository;
 import com.zerobase.storereservation.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -60,4 +62,44 @@ public class OwnerReservationService {
                         .build()
                 ).collect(Collectors.toList());
     }
+
+    public List<ReservationDto.Response> getPendingReservations(Long storeId) {
+        List<Reservation> reservations =
+                reservationRepository.findByStoreIdAndStatus(
+                        storeId, ReservationStatus.PENDING
+                );
+        return reservations.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+    @Transactional
+    public ReservationDto.Response approveReservation(Long reservationId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new CustomException(RESERVATION_NOT_FOUND));
+
+        reservation.setStatus(ReservationStatus.CONFIRMED);
+        return convertToDto(reservation);
+    }
+
+    @Transactional
+    public ReservationDto.Response rejectReservation(
+            Long reservationId, ReservationDto.CancelRequest cancelRequest) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new CustomException(RESERVATION_NOT_FOUND));
+        reservation.setStatus(ReservationStatus.REJECTED);
+        return convertToDto(reservation);
+    }
+
+    private ReservationDto.Response convertToDto(Reservation reservation) {
+        return ReservationDto.Response.builder()
+                .id(reservation.getId())
+                .storeId(reservation.getStore().getId())
+                .userId(reservation.getUser().getId())
+                .reservedAt(reservation.getReservedAt())
+                .status(reservation.getStatus())
+                .build();
+    }
+
+
+
 }
