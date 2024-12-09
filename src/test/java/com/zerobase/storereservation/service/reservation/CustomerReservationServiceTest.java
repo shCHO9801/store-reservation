@@ -4,12 +4,11 @@ import com.zerobase.storereservation.dto.ReservationDto;
 import com.zerobase.storereservation.entity.Reservation;
 import com.zerobase.storereservation.entity.Store;
 import com.zerobase.storereservation.entity.User;
-import com.zerobase.storereservation.entity.constants.ReservationStatus;
 import com.zerobase.storereservation.exception.CustomException;
-import com.zerobase.storereservation.exception.ErrorCode;
 import com.zerobase.storereservation.repository.ReservationRepository;
 import com.zerobase.storereservation.repository.StoreRepository;
 import com.zerobase.storereservation.repository.UserRepository;
+import com.zerobase.storereservation.util.LoggingUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,6 +38,9 @@ class CustomerReservationServiceTest {
     @Mock
     private StoreRepository storeRepository;
 
+    @Mock
+    private LoggingUtil loggingUtil;
+
     @InjectMocks
     private CustomerReservationService reservationService;
 
@@ -60,7 +62,7 @@ class CustomerReservationServiceTest {
         request.setUserId(user.getId());
         request.setStoreId(store.getId());
         request.setPhoneNumber("010-1234-5678");
-        request.setReservedAt(LocalDateTime.now());
+        request.setReservedAt(LocalDateTime.now().plusHours(1));
 
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
         when(storeRepository.findById(store.getId())).thenReturn(Optional.of(store));
@@ -71,6 +73,7 @@ class CustomerReservationServiceTest {
                 .store(store)
                 .phoneNumber("010-1234-5678")
                 .reservedAt(request.getReservedAt())
+                .reservedAt(LocalDateTime.now())
                 .build();
 
         when(reservationRepository.save(any())).thenReturn(savedReservation);

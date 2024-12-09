@@ -8,16 +8,17 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@ActiveProfiles("test")
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
@@ -49,20 +50,12 @@ class AuthenticationControllerTest {
         String token = jwtUtil.generateToken(username);
 
         // when & then
-        mockMvc.perform(get("/api/auth/me")
-                        .header("Authorization", "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value(username));
+        mockMvc.perform(get("/api/auth/me").header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andExpect(jsonPath("$.username").value(username));
     }
 
     @Test
     @DisplayName("현재 로그인된 사용자 정보 조회 - 인증 실패")
     void getMeUnauthorized() throws Exception {
-        mockMvc.perform(get("/api/auth/me")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.code").value("AUTH-001"))
-                .andExpect(jsonPath("$.message").value("인증이 필요합니다."));
+        mockMvc.perform(get("/api/auth/me").contentType(MediaType.APPLICATION_JSON)).andExpect(status().isUnauthorized()).andExpect(jsonPath("$.code").value("AUTH-001")).andExpect(jsonPath("$.message").value("인증이 필요합니다."));
     }
 }

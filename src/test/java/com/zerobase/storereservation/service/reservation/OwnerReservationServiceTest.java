@@ -11,15 +11,13 @@ import com.zerobase.storereservation.exception.ErrorCode;
 import com.zerobase.storereservation.repository.ReservationRepository;
 import com.zerobase.storereservation.repository.StoreRepository;
 import com.zerobase.storereservation.repository.UserRepository;
+import com.zerobase.storereservation.util.LoggingUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,6 +37,9 @@ class OwnerReservationServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private LoggingUtil loggingUtil;
 
     @InjectMocks
     private OwnerReservationService ownerReservationService;

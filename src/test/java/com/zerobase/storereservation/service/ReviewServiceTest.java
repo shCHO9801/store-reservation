@@ -4,27 +4,25 @@ import com.zerobase.storereservation.dto.ReviewDto;
 import com.zerobase.storereservation.entity.Review;
 import com.zerobase.storereservation.entity.Store;
 import com.zerobase.storereservation.entity.User;
-import com.zerobase.storereservation.entity.constants.ReservationStatus;
 import com.zerobase.storereservation.exception.CustomException;
 import com.zerobase.storereservation.exception.ErrorCode;
 import com.zerobase.storereservation.repository.ReservationRepository;
 import com.zerobase.storereservation.repository.ReviewRepository;
 import com.zerobase.storereservation.repository.StoreRepository;
 import com.zerobase.storereservation.repository.UserRepository;
+import com.zerobase.storereservation.util.LoggingUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.Spy;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import static com.zerobase.storereservation.entity.constants.ReservationStatus.CONFIRMED;
-import static com.zerobase.storereservation.exception.ErrorCode.REVIEW_NOT_FOUND;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -45,6 +43,9 @@ class ReviewServiceTest {
 
     @Mock
     private StoreService storeService;
+
+    @Mock
+    private LoggingUtil loggingUtil;
 
     @InjectMocks
     private ReviewService reviewService;

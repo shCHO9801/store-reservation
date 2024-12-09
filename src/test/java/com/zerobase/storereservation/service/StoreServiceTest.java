@@ -8,16 +8,15 @@ import com.zerobase.storereservation.exception.CustomException;
 import com.zerobase.storereservation.exception.ErrorCode;
 import com.zerobase.storereservation.repository.StoreRepository;
 import com.zerobase.storereservation.repository.UserRepository;
+import com.zerobase.storereservation.security.UserDetailsImpl;
+import com.zerobase.storereservation.util.LoggingUtil;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -39,6 +38,9 @@ class StoreServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private LoggingUtil loggingUtil;
 
     @AfterEach
     void tearDown() {
@@ -238,7 +240,6 @@ class StoreServiceTest {
         verify(storeRepository, times(1)).findById(storeId);
         verify(storeRepository, times(1)).delete(mockStore);
     }
-
 
 
     @Test
