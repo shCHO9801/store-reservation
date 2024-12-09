@@ -2,15 +2,14 @@ package com.zerobase.storereservation.service;
 
 import com.zerobase.storereservation.dto.ReviewDto;
 import com.zerobase.storereservation.entity.Reservation;
-import com.zerobase.storereservation.entity.Review;
 import com.zerobase.storereservation.entity.Store;
 import com.zerobase.storereservation.entity.User;
-import com.zerobase.storereservation.entity.constants.ReservationStatus;
 import com.zerobase.storereservation.exception.CustomException;
 import com.zerobase.storereservation.repository.ReservationRepository;
 import com.zerobase.storereservation.repository.ReviewRepository;
 import com.zerobase.storereservation.repository.StoreRepository;
 import com.zerobase.storereservation.repository.UserRepository;
+import com.zerobase.storereservation.util.LoggingUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,9 +23,7 @@ import java.time.LocalDateTime;
 import static com.zerobase.storereservation.entity.constants.ReservationStatus.CONFIRMED;
 import static com.zerobase.storereservation.entity.constants.Role.CUSTOMER;
 import static com.zerobase.storereservation.entity.constants.Role.PARTNER;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -51,9 +48,6 @@ public class ReviewServiceIntegrationTest {
     private Store store;
     private User user;
     private Reservation reservation;
-
-    @Autowired
-    private StoreService storeService;
 
     @BeforeEach
     void setUp() {
@@ -83,7 +77,8 @@ public class ReviewServiceIntegrationTest {
                         .owner(owner)
                         .build()
         );
-        reservation = reservationRepository.save(
+
+        reservation = reservationRepository.saveAndFlush(
                 Reservation.builder()
                         .user(user)
                         .store(store)
@@ -94,22 +89,23 @@ public class ReviewServiceIntegrationTest {
         );
     }
 
-    @Test
-    @DisplayName("리뷰 등록 후 평균 평점 업데이트")
-    void createReviewAndUpdateAverageRating() {
-        //given
-        ReviewDto.CreateRequest request1 = new ReviewDto.CreateRequest();
-        request1.setStoreId(store.getId());
-        request1.setUserId(user.getId());
-        request1.setRating(4);
-        request1.setContent("Great place!");
-        reviewService.createReview(request1);
+    private ReviewDto.CreateRequest createReviewRequest(Long storeId, Long userId, int rating, String content) {
+        ReviewDto.CreateRequest request = new ReviewDto.CreateRequest();
+        request.setStoreId(storeId);
+        request.setUserId(userId);
+        request.setRating(rating);
+        request.setContent(content);
+        return request;
+    }
 
-        ReviewDto.CreateRequest request2 = new ReviewDto.CreateRequest();
-        request2.setStoreId(store.getId());
-        request2.setUserId(user.getId());
-        request2.setRating(5);
-        request2.setContent("Amazing experience!");
+    @Test
+    @DisplayName("리뷰 등록 - 평균 평점이 올바르게 업데이트되는지 검증")
+    void shouldUpdateAverageRatingWhenReviewCreated() {
+        //given
+        ReviewDto.CreateRequest request1 = createReviewRequest(store.getId(), user.getId(), 4, "Great place!");
+        ReviewDto.CreateRequest request2 = createReviewRequest(store.getId(), user.getId(), 5, "Amazing experience!");
+
+        reviewService.createReview(request1);
         reviewService.createReview(request2);
 
         //when
@@ -121,25 +117,17 @@ public class ReviewServiceIntegrationTest {
     }
 
     @Test
-    @DisplayName("리뷰 삭제 후 평균 평점 업데이트")
-    void deleteReviewAndUpdateAverageRating() {
+    @DisplayName("리뷰 삭제 - 평균 평점이 올바르게 업데이트되는지 검증")
+    void shouldUpdateAverageRatingWhenReviewDeleted() {
         //given
-        ReviewDto.CreateRequest request1 = new ReviewDto.CreateRequest();
-        request1.setStoreId(store.getId());
-        request1.setUserId(user.getId());
-        request1.setRating(4);
-        request1.setContent("Great place!");
-        reviewService.createReview(request1);
+        ReviewDto.CreateRequest request1 = createReviewRequest(store.getId(), user.getId(), 4, "Great place!");
+        ReviewDto.CreateRequest request2 = createReviewRequest(store.getId(), user.getId(), 5, "Amazing experience!");
 
-        ReviewDto.CreateRequest request2 = new ReviewDto.CreateRequest();
-        request2.setStoreId(store.getId());
-        request2.setUserId(user.getId());
-        request2.setRating(5);
-        request2.setContent("Amazing experience!");
+        ReviewDto.Response review = reviewService.createReview(request1);
         reviewService.createReview(request2);
 
         //when
-        reviewService.deleteReview(1L, user.getId());
+        reviewService.deleteReview(review.getId(), user.getId());
         Store updatedStore = storeRepository.findById(store.getId())
                 .orElseThrow();
 
@@ -148,28 +136,24 @@ public class ReviewServiceIntegrationTest {
     }
 
     @Test
-    @DisplayName("리뷰가 없는 경우 평균 평점은 0")
-    void averageRatingWhenNoReviews() {
+    @DisplayName("리뷰가 없는 경우 - 평균 평점은 0이 되어야 함")
+    void shouldSetAverageRatingToZeroWhenNoReviewsExist() {
         //given
-        ReviewDto.CreateRequest request = new ReviewDto.CreateRequest();
-        request.setStoreId(store.getId());
-        request.setUserId(user.getId());
-        request.setRating(4);
-        request.setContent("Great place!");
+        ReviewDto.CreateRequest request = createReviewRequest(store.getId(), user.getId(), 4, "Great place!");
         ReviewDto.Response createdReview = reviewService.createReview(request);
 
         //when
         reviewService.deleteReview(createdReview.getId(), user.getId());
-        Store updateStore = storeRepository.findById(store.getId())
+        Store updatedStore = storeRepository.findById(store.getId())
                 .orElseThrow();
 
         //then
-        assertEquals(0.0, updateStore.getAverageRating());
+        assertEquals(0.0, updatedStore.getAverageRating());
     }
 
     @Test
-    @DisplayName("여러 사용자의 리뷰 평균 평점 계산")
-    void multipleUserReview() {
+    @DisplayName("여러 사용자의 리뷰 등록 - 평균 평점이 올바르게 계산되는지 검증")
+    void shouldCalculateAverageRatingForMultipleUsers() {
         //given
         User anotherUser = userRepository.save(
                 User.builder()
@@ -189,18 +173,10 @@ public class ReviewServiceIntegrationTest {
                         .build()
         );
 
-        ReviewDto.CreateRequest request1 = new ReviewDto.CreateRequest();
-        request1.setStoreId(store.getId());
-        request1.setUserId(user.getId());
-        request1.setRating(3);
-        request1.setContent("Great place!");
-        reviewService.createReview(request1);
+        ReviewDto.CreateRequest request1 = createReviewRequest(store.getId(), user.getId(), 3, "Great place!");
+        ReviewDto.CreateRequest request2 = createReviewRequest(store.getId(), anotherUser.getId(), 5, "Amazing experience!");
 
-        ReviewDto.CreateRequest request2 = new ReviewDto.CreateRequest();
-        request2.setStoreId(store.getId());
-        request2.setUserId(anotherUser.getId());
-        request2.setRating(5);
-        request2.setContent("Amazing experience!");
+        reviewService.createReview(request1);
         reviewService.createReview(request2);
 
         //when
@@ -212,14 +188,10 @@ public class ReviewServiceIntegrationTest {
     }
 
     @Test
-    @DisplayName("평점 범위 유효성 검증")
-    void validateRatingRange() {
+    @DisplayName("리뷰 등록 - 평점 범위(1~5)를 벗어난 경우 예외 처리 검증")
+    void shouldThrowExceptionWhenRatingOutOfRange() {
         //given
-        ReviewDto.CreateRequest request = new ReviewDto.CreateRequest();
-        request.setStoreId(store.getId());
-        request.setUserId(user.getId());
-        request.setRating(6);
-        request.setContent("Invalid rating test");
+        ReviewDto.CreateRequest request = createReviewRequest(store.getId(), user.getId(), 6, "Invalid rating test");
 
         //when&then
         assertThrows(CustomException.class,

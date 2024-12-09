@@ -16,8 +16,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -37,6 +37,10 @@ class JwtAuthenticationFilterTest {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+    // Authorization 헤더 이름
+    private static final String AUTH_HEADER = "Authorization";
+    // Bearer 토큰 접두어
+    private static final String BEARER_PREFIX = "Bearer ";
 
     @BeforeEach
     void setUp() {
@@ -52,19 +56,23 @@ class JwtAuthenticationFilterTest {
         userRepository.save(user);
     }
 
+
     @Test
     @DisplayName("JWT 필터 - 올바른 토큰으로 인증 요청")
     void testFilterWithValidToken() throws Exception {
         // given
-        String token = jwtUtil.generateToken("testUser");
+        String username = "testUser";
+        String token = jwtUtil.generateToken(username);
+        User user = userRepository.findByUsername(username).orElseThrow();
 
         // when & then
-        mockMvc.perform(get("/api/protected-endpoint")
-                        .header("Authorization", "Bearer " + token)
+        mockMvc.perform(get("/api/auth/me")
+                        .header(AUTH_HEADER, BEARER_PREFIX + token)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(result -> assertEquals("Access Granted",
-                        result.getResponse().getContentAsString()));
+                .andExpect(content().json(
+                        String.format("{\"id\":%d,\"username\":\"testUser\",\"role\":\"CUSTOMER\"}", user.getId())
+                ));
     }
 
     @Test
