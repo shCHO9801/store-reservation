@@ -67,7 +67,7 @@ class OwnerReservationServiceTest {
     @Test
     @DisplayName("점주 예약 정보 조회 - 성공")
     void getReservationsByStoreSuccess() {
-        //given
+        // given
         LocalDateTime date = LocalDateTime.of(2024, 12, 1, 0, 0);
         Reservation reservation1 = Reservation.builder()
                 .id(1L)
@@ -90,11 +90,11 @@ class OwnerReservationServiceTest {
                 date.withHour(23).withMinute(59)
         )).thenReturn(List.of(reservation1, reservation2));
 
-        //when
+        // when
         List<ReservationDto.Response> reservations =
                 ownerReservationService.getReservationsByStore(owner.getId(), store.getId(), date);
 
-        //then
+        // then
         assertNotNull(reservations);
         assertEquals(2, reservations.size());
         assertEquals(1L, reservations.get(0).getId());
@@ -102,13 +102,13 @@ class OwnerReservationServiceTest {
     }
 
     @Test
-    @DisplayName("점주 예약 정보 조회 실패 - 점주 권한 없음")
+    @DisplayName("점주 예약 정보 조회 - 실패 (권한 없음)")
     void getReservationsByStoreFailUnauthorizedAction() {
-        //given
+        // given
         owner.setRole(Role.CUSTOMER);
         when(userRepository.findById(owner.getId())).thenReturn(Optional.of(owner));
 
-        //when&then
+        // when & then
         CustomException e = assertThrows(CustomException.class,
                 () -> ownerReservationService.getReservationsByStore(
                         owner.getId(), store.getId(), LocalDateTime.now())
@@ -117,13 +117,13 @@ class OwnerReservationServiceTest {
     }
 
     @Test
-    @DisplayName("점주 예약 정보 조회 실패 - 매장이 존재하지 않음")
+    @DisplayName("점주 예약 정보 조회 - 실패 (매장 없음)")
     void getReservationsByStoreFailStoreNotFound() {
-        //given
+        // given
         when(userRepository.findById(owner.getId())).thenReturn(Optional.of(owner));
         when(storeRepository.findById(store.getId())).thenReturn(Optional.empty());
 
-        //when&then
+        // when & then
         CustomException e = assertThrows(CustomException.class,
                 () -> ownerReservationService.getReservationsByStore(
                         owner.getId(), store.getId(), LocalDateTime.now()
@@ -134,9 +134,9 @@ class OwnerReservationServiceTest {
     }
 
     @Test
-    @DisplayName("점주 예약 정보 조회 실패 - 매장 소유자 아님")
+    @DisplayName("점주 예약 정보 조회 - 실패 (매장 소유자 아님)")
     void getReservationsByStoreFailUnauthorizedStoreOwner() {
-        //given
+        // given
         Store otherStore = Store.builder()
                 .id(2L)
                 .name("Other Store")
@@ -146,7 +146,7 @@ class OwnerReservationServiceTest {
         when(userRepository.findById(owner.getId())).thenReturn(Optional.of(owner));
         when(storeRepository.findById(otherStore.getId())).thenReturn(Optional.of(otherStore));
 
-        //when&then
+        // when & then
         CustomException e = assertThrows(CustomException.class,
                 () -> ownerReservationService.getReservationsByStore(
                         owner.getId(), otherStore.getId(), LocalDateTime.now()
@@ -155,31 +155,9 @@ class OwnerReservationServiceTest {
     }
 
     @Test
-    @DisplayName("점주가 예약 승인 성공")
+    @DisplayName("점주가 예약 승인 - 성공")
     void approveReservationSuccess() {
-        //given
-        Reservation reservation = Reservation.builder()
-                .id(1L)
-                .store(store)
-                .user(User.builder().id(2L).build())
-                .status(ReservationStatus.PENDING)
-                .build();
-
-        when(reservationRepository.findById(reservation.getId())).
-                thenReturn(Optional.of(reservation));
-
-        //when
-        ReservationDto.Response result =
-                ownerReservationService.approveReservation(reservation.getId());
-
-        //then
-        assertEquals(ReservationStatus.CONFIRMED, result.getStatus());
-    }
-
-    @Test
-    @DisplayName("점주가 예약 거절 성공")
-    void rejectReservationSuccess() {
-        //given
+        // given
         Reservation reservation = Reservation.builder()
                 .id(1L)
                 .store(store)
@@ -190,14 +168,36 @@ class OwnerReservationServiceTest {
         when(reservationRepository.findById(reservation.getId()))
                 .thenReturn(Optional.of(reservation));
 
-        //when
+        // when
+        ReservationDto.Response result =
+                ownerReservationService.approveReservation(reservation.getId());
+
+        // then
+        assertEquals(ReservationStatus.CONFIRMED, result.getStatus());
+    }
+
+    @Test
+    @DisplayName("점주가 예약 거절 - 성공")
+    void rejectReservationSuccess() {
+        // given
+        Reservation reservation = Reservation.builder()
+                .id(1L)
+                .store(store)
+                .user(User.builder().id(2L).build())
+                .status(ReservationStatus.PENDING)
+                .build();
+
+        when(reservationRepository.findById(reservation.getId()))
+                .thenReturn(Optional.of(reservation));
+
+        // when
         ReservationDto.Response result =
                 ownerReservationService.rejectReservation(
                         reservation.getId(),
                         new ReservationDto.CancelRequest("점주가 거절함")
                 );
 
-        //then
+        // then
         assertEquals(ReservationStatus.REJECTED, result.getStatus());
     }
 }

@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
-public class StoreServiceSortingTest {
+class StoreServiceSortingTest {
 
     @InjectMocks
     private StoreService storeService;
@@ -77,16 +77,15 @@ public class StoreServiceSortingTest {
     }
 
     @Test
-    @DisplayName("가나다순 정렬")
+    @DisplayName("매장 리스트 가나다순 정렬")
     void sortByName() {
-        //given
+        // given
         when(storeRepository.findAll()).thenReturn(mockStores);
 
-        //when
-        List<StoreDto.Response> result =
-                storeService.getStores("name", null, null);
+        // when
+        List<StoreDto.Response> result = storeService.getStores("name", null, null);
 
-        //then
+        // then
         assertEquals(3, result.size());
         assertEquals("A Store", result.get(0).getName());
         assertEquals("B Store", result.get(1).getName());
@@ -94,16 +93,15 @@ public class StoreServiceSortingTest {
     }
 
     @Test
-    @DisplayName("별점순 정렬")
+    @DisplayName("매장 리스트 별점순 정렬")
     void sortByRating() {
-        //given
+        // given
         when(storeRepository.findAll()).thenReturn(mockStores);
 
-        //when
-        List<StoreDto.Response> result =
-                storeService.getStores("rating", null, null);
+        // when
+        List<StoreDto.Response> result = storeService.getStores("rating", null, null);
 
-        //then
+        // then
         assertEquals(3, result.size());
         assertEquals(4.0, result.get(0).getAverageRating());
         assertEquals(3.5, result.get(1).getAverageRating());
@@ -111,18 +109,17 @@ public class StoreServiceSortingTest {
     }
 
     @Test
-    @DisplayName("거리순 정렬")
+    @DisplayName("매장 리스트 거리순 정렬")
     void sortByDistance() {
-        //given
+        // given
         double userLat = 37.7749;
         double userLon = -122.4194;
         when(storeRepository.findAll()).thenReturn(mockStores);
 
-        //when
-        List<StoreDto.Response> result =
-                storeService.getStores("distance", userLat, userLon);
+        // when
+        List<StoreDto.Response> result = storeService.getStores("distance", userLat, userLon);
 
-        //then
+        // then
         assertEquals(3, result.size());
         assertEquals("A Store", result.get(0).getName());
         assertEquals("B Store", result.get(1).getName());
@@ -132,11 +129,11 @@ public class StoreServiceSortingTest {
     @Test
     @DisplayName("잘못된 정렬 기준으로 예외 발생")
     void sortByInvalidCriteria() {
-        //given
+        // given
         double userLat = 37.7749;
         double userLon = -122.4194;
 
-        //when&then
+        // when & then
         CustomException exception = assertThrows(CustomException.class,
                 () -> storeService.getStores("invalidSort", userLat, userLon));
         assertEquals(ErrorCode.INVALID_CRITERIA, exception.getErrorCode());
@@ -144,10 +141,9 @@ public class StoreServiceSortingTest {
     }
 
     @Test
-    @DisplayName("위치 값이 유효하지 않을 때 예외 발생")
+    @DisplayName("거리순 정렬 시 위치 값 누락으로 예외 발생")
     void sortByDistanceInvalidLocation() {
-        //given
-        //when&then
+        // when & then
         CustomException exception1 = assertThrows(CustomException.class,
                 () -> storeService.getStores("distance", 37.7749, null));
         assertEquals(ErrorCode.INVALID_LOCATION, exception1.getErrorCode());

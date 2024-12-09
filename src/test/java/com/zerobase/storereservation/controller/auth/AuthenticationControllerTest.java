@@ -37,9 +37,9 @@ class AuthenticationControllerTest {
     private PasswordEncoder passwordEncoder;
 
     @Test
-    @DisplayName("현재 로그인된 사용자 정보 조회 - 성공")
+    @DisplayName("로그인된 사용자 정보 조회 - 성공적으로 사용자 정보를 반환")
     void getMeSuccess() throws Exception {
-        // given
+        // given: 테스트를 위한 사용자 생성 및 JWT 토큰 생성
         String username = "testUser";
         User user = new User();
         user.setUsername(username);
@@ -49,13 +49,24 @@ class AuthenticationControllerTest {
 
         String token = jwtUtil.generateToken(username);
 
-        // when & then
-        mockMvc.perform(get("/api/auth/me").header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andExpect(jsonPath("$.username").value(username));
+        // when & then: /api/auth/me 엔드포인트 호출 및 응답 검증
+        mockMvc.perform(
+                        get("/api/auth/me")
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value(username));
     }
 
     @Test
-    @DisplayName("현재 로그인된 사용자 정보 조회 - 인증 실패")
+    @DisplayName("로그인된 사용자 정보 조회 - 인증 실패로 401 반환")
     void getMeUnauthorized() throws Exception {
-        mockMvc.perform(get("/api/auth/me").contentType(MediaType.APPLICATION_JSON)).andExpect(status().isUnauthorized()).andExpect(jsonPath("$.code").value("AUTH-001")).andExpect(jsonPath("$.message").value("인증이 필요합니다."));
+        // when & then: 인증 없이 /api/auth/me 엔드포인트 호출 및 응답 검증
+        mockMvc.perform(
+                        get("/api/auth/me")
+                                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTH-001"))
+                .andExpect(jsonPath("$.message").value("인증이 필요합니다."));
     }
 }

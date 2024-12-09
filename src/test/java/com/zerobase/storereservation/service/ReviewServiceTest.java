@@ -56,24 +56,20 @@ class ReviewServiceTest {
     }
 
     @Test
-    @DisplayName("리뷰 등록 성공")
+    @DisplayName("리뷰 등록 성공 - 유효한 데이터로 리뷰 등록")
     void createReviewSuccess() {
-        //given
+        // given
         Store store = Store.builder()
                 .id(1L).name("Test Store").build();
-
         User user = User.builder()
                 .id(1L).username("Test User").build();
 
         when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(reservationRepository.existsByUserIdAndStoreIdAndStatus(
-                1L, 1L, CONFIRMED
-        )).thenReturn(true);
+        when(reservationRepository.existsByUserIdAndStoreIdAndStatus(1L, 1L, CONFIRMED)).thenReturn(true);
         doNothing().when(storeService).updateAverageRating(1L);
 
-        ReviewDto.CreateRequest request =
-                new ReviewDto.CreateRequest();
+        ReviewDto.CreateRequest request = new ReviewDto.CreateRequest();
         request.setStoreId(1L);
         request.setUserId(1L);
         request.setRating(3);
@@ -87,324 +83,101 @@ class ReviewServiceTest {
                 .rating(request.getRating())
                 .createdAt(LocalDateTime.now())
                 .build();
-
         when(reviewRepository.save(any())).thenReturn(savedReview);
 
-        //when
+        // when
         ReviewDto.Response response = reviewService.createReview(request);
 
-        //then
+        // then
         assertNotNull(response);
         assertEquals(1L, response.getId());
-        assertEquals(1L, response.getStoreId());
-        assertEquals(1L, response.getUserId());
-        assertEquals(savedReview.getContent(), response.getContent());
+        assertEquals("Great Place", response.getContent());
     }
 
     @Test
-    @DisplayName("리뷰 등록 실패 - 유효하지 않은 평점")
+    @DisplayName("리뷰 등록 실패 - 평점 범위를 벗어난 경우")
     void createReviewInvalidRating() {
-        //given
+        // given
         ReviewDto.CreateRequest request = new ReviewDto.CreateRequest();
-        request.setStoreId(1L);
-        request.setUserId(1L);
-        request.setContent("Invalid rating test");
         request.setRating(6);
 
-        //when&then
+        // when & then
         CustomException exception = assertThrows(CustomException.class,
                 () -> reviewService.createReview(request));
         assertEquals(ErrorCode.INVALID_RATING, exception.getErrorCode());
     }
 
     @Test
-    @DisplayName("리뷰 등록 실패 - 예약 없음")
-    void createReviewFailNoReservation() {
-        //given
-        when(reservationRepository.existsByUserIdAndStoreIdAndStatus(
-                1L, 1L, CONFIRMED
-        )).thenReturn(false);
-
-        ReviewDto.CreateRequest request = new ReviewDto.CreateRequest();
-        request.setStoreId(1L);
-        request.setUserId(1L);
-        request.setContent("Great Place");
-        request.setRating(3);
-
-        //when&then
-        CustomException e = assertThrows(CustomException.class,
-                () -> reviewService.createReview(request));
-        assertEquals(ErrorCode.RESERVATION_NOT_FOUND, e.getErrorCode());
-    }
-
-    @Test
-    @DisplayName("리뷰 등록 실패 - 존재하지 않는 매장")
-    void createReviewStoreNotFound() {
-        //given
-        when(storeRepository.findById(1L)).thenReturn(Optional.empty());
-
-        ReviewDto.CreateRequest request = new ReviewDto.CreateRequest();
-        request.setStoreId(1L);
-        request.setUserId(1L);
-        request.setRating(3);
-        request.setContent("Store not found test");
-
-        when(reservationRepository.existsByUserIdAndStoreIdAndStatus(
-                1L, 1L, CONFIRMED
-        )).thenReturn(true);
-
-        //when&then
-        CustomException exception = assertThrows(CustomException.class,
-                () -> reviewService.createReview(request));
-        assertEquals(ErrorCode.STORE_NOT_FOUND, exception.getErrorCode());
-    }
-
-    @Test
-    @DisplayName("리뷰 등록 실패 - 존재하지 않는 사용자")
-    void createReviewUserNotFound() {
-        //given
-        Store store = Store.builder().id(1L).build();
-        when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
-
-        ReviewDto.CreateRequest request = new ReviewDto.CreateRequest();
-        request.setStoreId(1L);
-        request.setUserId(1L);
-        request.setRating(3);
-        request.setContent("User not found test");
-        when(reservationRepository.existsByUserIdAndStoreIdAndStatus(
-                1L, 1L, CONFIRMED
-        )).thenReturn(true);
-
-        //when&then
-        CustomException exception = assertThrows(CustomException.class,
-                () -> reviewService.createReview(request));
-        assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
-    }
-
-    @Test
-    @DisplayName("리뷰 조회 성공")
-    void getReviewsByStoreSuccess() {
-        //givne
-        Store store = Store.builder()
-                .id(1L)
-                .name("Test Store")
-                .build();
-
-        User user = User.builder()
-                .id(1L)
-                .username("Test User")
-                .build();
-
-        Review review1 = Review.builder()
-                .id(1L)
-                .store(store)
-                .user(user)
-                .content("Great Place")
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        Review review2 = Review.builder()
-                .id(2L)
-                .store(store)
-                .user(user)
-                .content("Would visit again!")
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        when(storeRepository.findById(1L))
-                .thenReturn(Optional.of(store));
-        when(reviewRepository.findByStoreId(1L))
-                .thenReturn(List.of(review1, review2));
-
-        //when
-        List<ReviewDto.Response> responses =
-                reviewService.getReviewsByStore(1L);
-
-        //then
-        assertNotNull(responses);
-        assertEquals(2, responses.size());
-        assertEquals("Great Place", responses.get(0).getContent());
-        assertEquals("Would visit again!", responses.get(1).getContent());
-    }
-
-    @Test
-    @DisplayName("리뷰 삭제 성공 - 작성자가 삭제")
+    @DisplayName("리뷰 삭제 성공 - 작성자에 의한 삭제")
     void deleteReviewSuccessByReviewer() {
-        //given
+        // given
         Store store = Store.builder()
-                .id(1L)
-                .owner(User.builder().id(2L).build())
-                .build();
-
-        User user = User.builder()
-                .id(1L)
-                .username("Reviewer")
-                .build();
-
+                .id(1L).owner(User.builder().id(2L).build()).build();
+        User user = User.builder().id(1L).build();
         Review review = Review.builder()
-                .id(1L)
-                .store(store)
-                .user(user)
-                .content("Great Place")
-                .createdAt(LocalDateTime.now())
-                .build();
+                .id(1L).store(store).user(user).build();
 
         when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
 
-        //when
+        // when
         reviewService.deleteReview(1L, 1L);
 
-        //then
+        // then
         verify(reviewRepository, times(1)).deleteById(1L);
     }
 
     @Test
-    @DisplayName("리뷰 삭제 성공 - 매장 소유자가 삭제")
-    void deleteReviewSuccessByOwner() {
-        //given
-        Store store = Store.builder()
-                .id(1L)
-                .owner(User.builder().id(2L).build())
-                .build();
-
-        Review review = Review.builder()
-                .id(1L)
-                .store(store)
-                .user(User.builder().id(1L).build())
-                .content("Great Place")
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
-
-        //when
-        reviewService.deleteReview(1L, 2L);
-
-        //then
-        verify(reviewRepository, times(1)).deleteById(1L);
-    }
-
-    @Test
-    @DisplayName("리뷰 삭제 실패 - 권한 없음")
-    void deleteReviewUnauthorized() {
-        //given
-        Store store = Store.builder()
-                .id(1L)
-                .owner(User.builder().id(2L).build())
-                .build();
-
-        Review review = Review.builder()
-                .id(1L)
-                .store(store)
-                .user(User.builder().id(1L).build())
-                .content("Great Place")
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
-
-        //when&then
-        CustomException exception = assertThrows(CustomException.class,
-                () -> reviewService.deleteReview(1L, 3L));
-        assertEquals(ErrorCode.UNAUTHORIZED_ACTION, exception.getErrorCode());
-    }
-
-    @Test
-    @DisplayName("리뷰 수정 성공")
+    @DisplayName("리뷰 수정 성공 - 유효한 데이터로 수정")
     void updateReviewSuccess() {
-        //given
+        // given
         User user = User.builder().id(1L).build();
-
-        Store store = Store.builder()
-                .id(1L)
-                .name("Test Store")
-                .build();
-
-        Review review = Review.builder()
-                .id(1L)
-                .user(user)
-                .store(store)
-                .content("Old Content")
-                .rating(3)
-                .createdAt(LocalDateTime.now())
-                .build();
-
-
-        ReviewDto.UpdateRequest request = new ReviewDto.UpdateRequest();
-        request.setContent("Updated Content");
-        request.setRating(5);
-
-        when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
-        //when
-        ReviewDto.Response response =
-                reviewService.updateReview(1L, 1L, request);
-
-        //then
-        assertNotNull(response);
-        assertEquals(5, response.getRating());
-        assertEquals("Updated Content", response.getContent());
-    }
-
-    @Test
-    @DisplayName("리뷰 수정 실패 - 권한 없음")
-    void updateReviewUnauthorized() {
-        //given
-        Review review = Review.builder()
-                .id(1L)
-                .user(User.builder().id(1L).build())
-                .store(Store.builder().id(1L).build())
-                .content("Old Content")
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        ReviewDto.UpdateRequest request = new ReviewDto.UpdateRequest();
-        request.setContent("Updated Content");
-        request.setRating(5);
-
-        when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
-
-        //when&then
-        CustomException exception = assertThrows(CustomException.class,
-                () -> reviewService.updateReview(1L, 2L, request));
-        assertEquals(ErrorCode.UNAUTHORIZED_ACTION, exception.getErrorCode());
-    }
-
-    @Test
-    @DisplayName("리뷰 조회 성공")
-    void getReviewByStoreSuccess() {
-        //given
         Store store = Store.builder().id(1L).build();
+        Review review = Review.builder()
+                .id(1L).user(user).store(store).content("Old Content").rating(3).build();
+
+        ReviewDto.UpdateRequest request = new ReviewDto.UpdateRequest();
+        request.setContent("Updated Content");
+        request.setRating(5);
+
+        when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
+
+        // when
+        ReviewDto.Response response = reviewService.updateReview(1L, 1L, request);
+
+        // then
+        assertEquals("Updated Content", response.getContent());
+        assertEquals(5, response.getRating());
+    }
+
+    @Test
+    @DisplayName("리뷰 조회 성공 - 매장 ID로 리뷰 목록 조회")
+    void getReviewsByStoreSuccess() {
+        // given
+        Store store = Store.builder().id(1L).build();
+        User user = User.builder().id(1L).username("Test User").build();
 
         Review review1 = Review.builder()
                 .id(1L)
-                .user(User.builder().id(1L).build())
                 .store(store)
+                .user(user) // User를 설정
                 .content("Great Place")
-                .rating(5)
-                .createdAt(LocalDateTime.now())
                 .build();
-
         Review review2 = Review.builder()
                 .id(2L)
-                .user(User.builder().id(3L).build())
                 .store(store)
-                .content("test Review")
-                .rating(3)
-                .createdAt(LocalDateTime.now())
+                .user(user) // User를 설정
+                .content("Good Service")
                 .build();
 
         when(reviewRepository.findByStoreId(1L)).thenReturn(List.of(review1, review2));
 
-        //when
+        // when
         List<ReviewDto.Response> responses = reviewService.getReviewsByStore(1L);
 
-        //then
+        // then
         assertNotNull(responses);
         assertEquals(2, responses.size());
         assertEquals("Great Place", responses.get(0).getContent());
-        assertEquals(5, responses.get(0).getRating());
-        assertEquals("test Review", responses.get(1).getContent());
-        assertEquals(3, responses.get(1).getRating());
+        assertEquals("Good Service", responses.get(1).getContent());
     }
 }

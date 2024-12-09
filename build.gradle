@@ -38,8 +38,6 @@ dependencies {
     implementation 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
-    implementation 'io.springfox:springfox-boot-starter:3.0.0'
-
     testImplementation "com.h2database:h2"
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

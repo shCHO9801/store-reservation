@@ -15,6 +15,7 @@ public class StoreDto {
      * - 매장을 생성하기 위한 입력 데이터를 전달하는 클래스
      */
     @Data
+    @Builder
     public static class CreateRequest {
         private String name;            // 매장 이름
         private String description;     // 매장 설명

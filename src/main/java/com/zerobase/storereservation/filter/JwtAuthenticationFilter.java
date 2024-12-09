@@ -1,5 +1,6 @@
 package com.zerobase.storereservation.filter;
 
+import com.zerobase.storereservation.config.SecurityConfig;
 import com.zerobase.storereservation.exception.JwtException;
 import com.zerobase.storereservation.util.JwtUtil;
 import jakarta.servlet.FilterChain;
@@ -55,6 +56,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain chain)
             throws IOException, ServletException {
+        String uri = request.getRequestURI();
+
+        for(String url : SecurityConfig.PUBLIC_URLS) {
+            if(uri.startsWith(url)) {
+                chain.doFilter(request, response);
+                return;
+            }
+        }
         String header = request.getHeader(AUTH_HEADER);
 
         if (header != null && header.startsWith(BEARER_PREFIX)) {
@@ -62,6 +71,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             String token = header.substring(BEARER_PREFIX.length()); // "Bearer " 제거
             log.info("[JWT FILTER] 토큰 추출");
+
             try {
                 // 토큰 검증
                 if (jwtUtil.validateToken(token)) {

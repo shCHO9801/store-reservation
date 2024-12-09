@@ -31,7 +31,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
      * 사용자 이름으로 사용자 정보 조회
      *
      * @param username 사용자 이름
-     * @return UserDetails 객체 (Spring Security에서 인증 처리에 사용)
+     * @return UserDetails 객체 (Spring Security 에서 인증 처리에 사용)
      * @throws UsernameNotFoundException 사용자를 찾을 수 없는 경우 발생
      */
     @Override

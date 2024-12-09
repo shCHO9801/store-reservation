@@ -40,9 +40,10 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     // 공용 URL 목록 (인증 불필요한 경로)
-    private static final String[] PUBLIC_URLS = {
+    public static final String[] PUBLIC_URLS = {
             "/api/auth/signup",
             "/api/auth/login",
+            "/api/users"
     };
 
     /**

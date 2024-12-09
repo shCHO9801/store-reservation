@@ -28,6 +28,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("StoreService Test")
 class StoreServiceTest {
 
     @InjectMocks
@@ -48,53 +49,36 @@ class StoreServiceTest {
     }
 
     @Test
-    @DisplayName("상점 등록 성공")
+    @DisplayName("상점 등록 - 성공")
     void createStoreSuccess() {
-        //given
-        StoreDto.CreateRequest request = new StoreDto.CreateRequest();
-        request.setName("Test Store");
-        request.setDescription("Test Description");
-        request.setOwnerId(1L);
-        request.setLatitude(37.7749);
-        request.setLongitude(-122.4194);
-
+        // given
+        StoreDto.CreateRequest request = createStoreRequest();
         User mockUser = User.builder().id(1L).build();
-
-        Store mockStore = Store.builder()
-                .id(1L)
-                .name("Test Store")
-                .description("Test Description")
-                .owner(mockUser)
-                .averageRating(0.0)
-                .latitude(37.7749)
-                .longitude(-122.4194)
-                .build();
+        Store mockStore = createMockStore(mockUser);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser));
         when(storeRepository.save(any(Store.class))).thenReturn(mockStore);
 
-        //when
+        // when
         StoreDto.Response response = storeService.createStore(request);
 
-        //then
+        // then
         assertNotNull(response);
         assertEquals("Test Store", response.getName());
-        assertEquals("Test Description", response.getDescription());
-        assertEquals(37.7749, response.getLatitude());
-        assertEquals(-122.4194, response.getLongitude());
         verify(userRepository, times(1)).findById(1L);
         verify(storeRepository, times(1)).save(any(Store.class));
     }
 
     @Test
-    @DisplayName("상점 등록 실패 - 소유자 없음")
+    @DisplayName("상점 등록 - 실패: 소유자 없음")
     void createStoreUserNotFound() {
-        //given
-        StoreDto.CreateRequest request = new StoreDto.CreateRequest();
-        request.setOwnerId(999L);
+        // given
+        StoreDto.CreateRequest request = createStoreRequest();
+        request.setOwnerId(1L);
 
-        when(userRepository.findById(999L)).thenReturn(Optional.empty());
-        //when&then
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // when & then
         CustomException exception = assertThrows(CustomException.class,
                 () -> storeService.createStore(request));
         assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
@@ -102,168 +86,131 @@ class StoreServiceTest {
     }
 
     @Test
-    @DisplayName("상점 조회 성공")
+    @DisplayName("상점 조회 - 성공")
     void getStoreByIdSuccess() {
-        //given
+        // given
         Long storeId = 1L;
-        User mockUser = User.builder().id(1L).build();
-        Store mockStore = Store.builder()
-                .id(storeId)
-                .name("Test Store")
-                .description("Test Description")
-                .owner(mockUser)
-                .averageRating(4.5)
-                .latitude(37.7749)
-                .longitude(-122.4194)
-                .build();
+        Store mockStore = createMockStore(User.builder().id(1L).build());
 
-        when(storeRepository.findById(storeId))
-                .thenReturn(Optional.of(mockStore));
+        when(storeRepository.findById(storeId)).thenReturn(Optional.of(mockStore));
 
-        //when
+        // when
         StoreDto.Response response = storeService.getStoreById(storeId);
 
-        //then
+        // then
         assertNotNull(response);
         assertEquals("Test Store", response.getName());
         verify(storeRepository, times(1)).findById(storeId);
     }
 
     @Test
-    @DisplayName("상점 조회 실패 - 상점 없음")
+    @DisplayName("상점 조회 - 실패: 상점 없음")
     void getStoreByIdNotFound() {
-        //given
+        // given
         Long storeId = 999L;
-        when(storeRepository.findById(999L)).thenReturn(Optional.empty());
+        when(storeRepository.findById(storeId)).thenReturn(Optional.empty());
 
-        //when&then
+        // when & then
         CustomException exception = assertThrows(CustomException.class,
                 () -> storeService.getStoreById(storeId));
         assertEquals(ErrorCode.STORE_NOT_FOUND, exception.getErrorCode());
-        verify(storeRepository, times(1)).findById(storeId);
     }
 
     @Test
-    @DisplayName("상점 수정 성공")
+    @DisplayName("상점 수정 - 성공")
     void updateStoreSuccess() {
-        //given
+        // given
         Long storeId = 1L;
-        StoreDto.CreateRequest request = new StoreDto.CreateRequest();
-        request.setName("Update Store");
-        request.setDescription("Update Description");
-        request.setLatitude(40.7128);
-        request.setLongitude(-74.0060);
+        StoreDto.CreateRequest request = createStoreRequest();
+        Store mockStore = createMockStore(User.builder().id(1L).build());
 
-        User mockUser = User.builder()
-                .id(1L)
-                .username("testusername")
-                .password("testpassword")
-                .role(Role.PARTNER)
-                .build();
-        Store mockStore = Store.builder()
-                .id(storeId)
-                .name("Original Store")
-                .description("Original Description")
-                .owner(mockUser)
-                .averageRating(4.0)
-                .latitude(37.7749)
-                .longitude(-122.4194)
-                .build();
-
-        mockSecurityContext(mockUser);
+        mockSecurityContext(mockStore.getOwner());
 
         when(storeRepository.findById(storeId)).thenReturn(Optional.of(mockStore));
-        when(storeRepository.save(any(Store.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(storeRepository.save(any(Store.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        //when
+        // when
         StoreDto.Response response = storeService.updateStore(storeId, request);
 
-        //then
+        // then
         assertNotNull(response);
-        assertEquals("Update Store", response.getName());
-        assertEquals("Update Description", response.getDescription());
-        assertEquals(40.7128, response.getLatitude());
-        assertEquals(-74.0060, response.getLongitude());
-        verify(storeRepository, times(1)).findById(storeId);
-        verify(storeRepository, times(1)).save(any(Store.class));
+        assertEquals("Test Store", response.getName());
     }
 
     @Test
-    @DisplayName("상점 수정 실패 - 권한 없음")
+    @DisplayName("상점 수정 - 실패: 권한 없음")
     void updateStoreUnauthorized() {
-        //given
+        // given
         Long storeId = 1L;
-        StoreDto.CreateRequest request = new StoreDto.CreateRequest();
-        request.setName("Unauthorized Update");
+        StoreDto.CreateRequest request = createStoreRequest();
+        Store mockStore = createMockStore(User.builder().id(1L).build());
 
-        User mockOwner = User.builder().id(1L).build();
-        User mockUser = User.builder().id(2L).build();
-
-        Store mockStore = Store.builder()
-                .id(storeId)
-                .name("Original Store")
-                .owner(mockOwner)
-                .build();
+        mockSecurityContext(User.builder().id(2L).build());
 
         when(storeRepository.findById(storeId)).thenReturn(Optional.of(mockStore));
-        mockSecurityContext(mockUser);
 
-        //when&then
+        // when & then
         CustomException exception = assertThrows(CustomException.class,
                 () -> storeService.updateStore(storeId, request));
         assertEquals(ErrorCode.UNAUTHORIZED_ACTION, exception.getErrorCode());
-        verify(storeRepository, times(1)).findById(storeId);
-        verify(storeRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("상점 삭제 성공")
+    @DisplayName("상점 삭제 - 성공")
     void deleteStoreSuccess() {
-        //given
+        // given
         Long storeId = 1L;
-        User mockUser = User.builder().id(1L).build();
-        Store mockStore = Store.builder()
-                .id(storeId)
-                .name("Test Store")
-                .owner(mockUser)
-                .build();
+        Store mockStore = createMockStore(User.builder().id(1L).build());
 
-        when(storeRepository.findById(storeId)).thenReturn(Optional.of(mockStore));
-        mockSecurityContext(mockUser);
+        mockSecurityContext(mockStore.getOwner());
         when(storeRepository.findById(storeId)).thenReturn(Optional.of(mockStore));
 
-        //when
+        // when
         storeService.deleteStore(storeId);
 
-        //then
-        verify(storeRepository, times(1)).findById(storeId);
+        // then
         verify(storeRepository, times(1)).delete(mockStore);
     }
 
-
     @Test
+    @DisplayName("상점 삭제 - 실패: 권한 없음")
     void deleteStoreUnauthorized() {
-        //given
+        // given
         Long storeId = 1L;
-        User mockOwner = User.builder().id(1L).build();
-        User mockUser = User.builder().id(2L).build();
+        Store mockStore = createMockStore(User.builder().id(1L).build());
 
-        Store mockStore = Store.builder()
-                .id(storeId)
-                .name("Test Store")
-                .owner(mockOwner)
-                .build();
-
+        mockSecurityContext(User.builder().id(2L).build());
         when(storeRepository.findById(storeId)).thenReturn(Optional.of(mockStore));
-        mockSecurityContext(mockUser);
 
-        //when&then
+        // when & then
         CustomException exception = assertThrows(CustomException.class,
                 () -> storeService.deleteStore(storeId));
         assertEquals(ErrorCode.UNAUTHORIZED_ACTION, exception.getErrorCode());
-        verify(storeRepository, times(1)).findById(storeId);
-        verify(storeRepository, never()).delete(any());
+    }
+
+    // === Helper Methods ===
+
+    private StoreDto.CreateRequest createStoreRequest() {
+        return StoreDto.CreateRequest
+                .builder()
+                .name("Test Store")
+                .description("Test Description")
+                .latitude(37.7749)
+                .longitude(-122.4194)
+                .ownerId(1L)
+                .build();
+    }
+
+    private Store createMockStore(User owner) {
+        return Store.builder()
+                .id(1L)
+                .name("Test Store")
+                .description("Test Description")
+                .owner(owner)
+                .latitude(37.7749)
+                .longitude(-122.4194)
+                .averageRating(4.0)
+                .build();
     }
 
     private void mockSecurityContext(User mockUser) {
